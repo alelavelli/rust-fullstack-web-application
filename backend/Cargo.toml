@@ -1,0 +1,39 @@
+[package]
+name = "backend"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Error handling
+thiserror = "2.0.17"
+# Async
+async-trait = "0.1.89"
+futures = "0.3.31"
+tokio = "1.48.0"
+# Logging dependencies
+tracing = "0.1.41"
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.20", features = ["std", "env-filter"] }
+# Web application framework
+axum = { version = "0.8.6", features = ["macros"] }
+axum-extra = { version = "0.10.3", features = ["typed-header"] }
+headers = "0.4.1"
+tower = { version = "0.5.2", features = ["timeout"] }
+tower-http = { version = "0.6.6", features = ["trace", "cors", "fs"] }
+# Authorization
+jsonwebtoken = { version = "10.1.0", features = ["rust_crypto"] }
+# Time
+chrono = { version = "0.4.42", features = ["serde"] }
+# Serialization and deserialization
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+# Database
+mongodb = "3.3.0"
+bson = { version = "3.0.0", features = ["chrono-0_4"] }
+# Utils
+base64ct = "1.8.0"
+bcrypt = "0.17.1"
+derive_builder = "0.20.2"
+# Macro
+paste = "1.0.15"
