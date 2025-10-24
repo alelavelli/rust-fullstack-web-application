@@ -22,6 +22,11 @@ use tracing::error;
 
 use crate::types::AppJson;
 
+type AppResult<T> = Result<T, AppError>;
+type ServiceResult<T> = Result<T, ServiceAppError>;
+type AuthResult<T> = Result<T, AuthError>;
+type DatabaseResult<T> = Result<T, DatabaseError>;
+
 /// Enumeration of different error typologies that the application
 /// can return to the client.
 ///
