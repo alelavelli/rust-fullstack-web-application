@@ -81,3 +81,16 @@ impl TryFrom<&str> for FrontendMode {
         }
     }
 }
+
+impl Display for FrontendMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                FrontendMode::External => "External",
+                FrontendMode::Integrated(_) => "Internal",
+            }
+        )
+    }
+}

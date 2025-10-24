@@ -23,6 +23,7 @@ use crate::{
 /// - MONGODB_DB_NAME: name of mongodb database to use as prefix by adding deploy environment
 /// - OBJECT_STORAGE_BACKEND: which type of backend to use as object storage
 /// - OBJECT_STORAGE_PREFIX_PATH: prefix path to store objects. In case of remote object storage it contains also the bucket name
+/// - FRONTEND_MODE: whether to work with integrated frontend or as external service
 #[derive(Clone)]
 pub struct EnvironmentService {
     logging: LoggingVariables,

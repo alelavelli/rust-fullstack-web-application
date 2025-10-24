@@ -7,6 +7,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey};
 use crate::enums::{FrontendMode, ObjectSourceType};
 
 mod service;
+pub use service::EnvironmentService;
 
 /// Trait that defines the behavior of an Environment Service
 ///
