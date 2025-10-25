@@ -14,7 +14,7 @@ pub use service::EnvironmentService;
 /// It defines methods to get the information the application may need
 /// and that needs to be defined in one place during the application
 /// initialization.
-pub trait EnvironmentServiceTrait {
+pub trait EnvironmentServiceTrait: Send + Sync {
     fn get_database_connection_string(&self) -> &str;
 
     fn get_database_db_name(&self) -> &str;

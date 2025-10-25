@@ -33,6 +33,12 @@ pub struct EnvironmentService {
     frontend: FrontendVariables,
 }
 
+impl Default for EnvironmentService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EnvironmentService {
     pub fn new() -> Self {
         let deploy_environment = if cfg!(test) {
