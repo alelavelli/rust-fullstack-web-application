@@ -5,8 +5,8 @@ use axum::{
     routing::{get, get_service},
 };
 use backend::{
-    AppState, EnvironmentService, FrontendMode, add_cors_middleware, add_logging_middleware,
-    health_handler,
+    AppState, DatabaseService, EnvironmentService, EnvironmentServiceTrait, FrontendMode,
+    add_cors_middleware, add_logging_middleware, health_handler,
 };
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
@@ -23,8 +23,12 @@ use tracing::info;
 #[tokio::main]
 async fn main() {
     let environment_service = EnvironmentService::default();
+    let database_service = DatabaseService::new(
+        environment_service.get_database_db_name().into(),
+        environment_service.get_database_connection_string().into(),
+    );
 
-    let app_state = AppState::new(Arc::new(environment_service));
+    let app_state = AppState::new(Arc::new(environment_service), Arc::new(database_service));
 
     // initialize tracing logging with level defined by the environment service
     tracing_subscriber::fmt()

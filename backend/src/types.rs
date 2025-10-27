@@ -7,7 +7,7 @@ use axum::{
 };
 use tokio::task_local;
 
-use crate::{EnvironmentServiceTrait, error::AppError};
+use crate::{DatabaseServiceTrait, EnvironmentServiceTrait, error::AppError};
 
 /// JSON extractor wrapping `axum::Json`.
 /// This makes it easy to override the rejection and provide our
@@ -35,12 +35,17 @@ where
 #[derive(Clone)]
 pub struct AppState {
     pub environment_service: Arc<dyn EnvironmentServiceTrait>,
+    pub database_service: Arc<dyn DatabaseServiceTrait>,
 }
 
 impl AppState {
-    pub fn new(environment_service: Arc<dyn EnvironmentServiceTrait>) -> AppState {
+    pub fn new(
+        environment_service: Arc<dyn EnvironmentServiceTrait>,
+        database_service: Arc<dyn DatabaseServiceTrait>,
+    ) -> AppState {
         AppState {
             environment_service,
+            database_service,
         }
     }
 }

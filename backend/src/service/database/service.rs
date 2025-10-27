@@ -1,4 +1,5 @@
-use mongodb::{Client, options::ClientOptions};
+use async_trait::async_trait;
+use mongodb::{Client, Database, options::ClientOptions};
 
 use crate::{
     DatabaseResult,
@@ -55,6 +56,7 @@ impl Default for DatabaseService {
     }
 }
 
+#[async_trait]
 impl DatabaseServiceTrait for DatabaseService {
     async fn connect(&mut self) -> DatabaseResult<()> {
         if self.client.is_none() {
@@ -75,9 +77,9 @@ impl DatabaseServiceTrait for DatabaseService {
         &self.database_name
     }
 
-    fn get_collection<T: Send + Sync>(&self, name: &str) -> DatabaseResult<mongodb::Collection<T>> {
+    fn get_database(&self) -> DatabaseResult<Database> {
         if let Some(client) = &self.client {
-            Ok(client.database(&self.database_name).collection::<T>(name))
+            Ok(client.database(&self.database_name))
         } else {
             Err(DatabaseError::ClientNotConnected)
         }

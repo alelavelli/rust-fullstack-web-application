@@ -1,11 +1,19 @@
-use crate::{DatabaseResult, service::database::transaction::DatabaseTransaction};
+use crate::{
+    DatabaseResult,
+    service::database::{document::DatabaseDocument, transaction::DatabaseTransaction},
+};
 
 mod document;
 mod service;
 mod smart_document;
 mod transaction;
 
+use async_trait::async_trait;
+use mongodb::Database;
+pub use service::DatabaseService;
+
 /// Trait to define the database service behavior
+#[async_trait]
 pub trait DatabaseServiceTrait: Send + Sync {
     async fn connect(&mut self) -> DatabaseResult<()>;
 
@@ -13,7 +21,7 @@ pub trait DatabaseServiceTrait: Send + Sync {
 
     fn get_db_name(&self) -> &str;
 
-    fn get_collection<T: Send + Sync>(&self, name: &str) -> DatabaseResult<mongodb::Collection<T>>;
+    fn get_database(&self) -> DatabaseResult<Database>;
 
     async fn new_transaction(&self) -> DatabaseResult<DatabaseTransaction>;
 }
