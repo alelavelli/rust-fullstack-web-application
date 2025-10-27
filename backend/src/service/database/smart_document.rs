@@ -28,11 +28,9 @@ impl<T: DatabaseDocument> SmartDocumentReference<T> {
     pub async fn as_document_ref(&mut self) -> DatabaseResult<&T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let document = T::find_one(doc! {"_id": document_id.clone()})
+                let document = T::find_one(doc! {"_id": *document_id})
                     .await
-                    .and_then(|op| {
-                        op.ok_or(DatabaseError::DocumentDoesNotExist(document_id.clone()))
-                    })?;
+                    .and_then(|op| op.ok_or(DatabaseError::DocumentDoesNotExist(*document_id)))?;
                 *self = SmartDocumentReference::Document(document);
                 self.as_document_ref().await
             }
@@ -47,11 +45,9 @@ impl<T: DatabaseDocument> SmartDocumentReference<T> {
     pub async fn as_document_ref_mut(&mut self) -> DatabaseResult<&mut T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let document = T::find_one(doc! {"_id": document_id.clone()})
+                let document = T::find_one(doc! {"_id": *document_id})
                     .await
-                    .and_then(|op| {
-                        op.ok_or(DatabaseError::DocumentDoesNotExist(document_id.clone()))
-                    })?;
+                    .and_then(|op| op.ok_or(DatabaseError::DocumentDoesNotExist(*document_id)))?;
                 *self = SmartDocumentReference::Document(document);
                 self.as_document_ref_mut().await
             }
@@ -63,11 +59,9 @@ impl<T: DatabaseDocument> SmartDocumentReference<T> {
     pub async fn to_document(self) -> DatabaseResult<T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let document = T::find_one(doc! {"_id": document_id.clone()})
+                let document = T::find_one(doc! {"_id": document_id})
                     .await
-                    .and_then(|op| {
-                        op.ok_or(DatabaseError::DocumentDoesNotExist(document_id.clone()))
-                    })?;
+                    .and_then(|op| op.ok_or(DatabaseError::DocumentDoesNotExist(document_id)))?;
                 Ok(document)
             }
             SmartDocumentReference::Document(document) => Ok(document),

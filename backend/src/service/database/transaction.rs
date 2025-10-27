@@ -70,8 +70,7 @@ impl DatabaseTransaction {
                     .ok_or(DatabaseError::TransactionError(
                         "outcome of insert_one is None but it does not contain Error".into(),
                     ))?
-                    .to_string()
-                    .into(),
+                    .to_string(),
             ))
         }
     }
@@ -103,8 +102,7 @@ impl DatabaseTransaction {
                     .ok_or(DatabaseError::TransactionError(
                         "outcome of insert_many is None but it does not contain error".into(),
                     ))?
-                    .to_string()
-                    .into(),
+                    .to_string(),
             ))
         }
     }
