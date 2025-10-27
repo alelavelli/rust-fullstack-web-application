@@ -1,0 +1,94 @@
+use bson::oid::ObjectId;
+
+use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocument};
+use mongodb::bson::doc;
+
+/// Enum that caches a mongodb document so that it can be
+/// accessed reading it repeatedly without doing an additional query
+/// to the database
+#[derive(Clone)]
+pub enum SmartDocumentReference<T: DatabaseDocument> {
+    Id(ObjectId),
+    Document(T),
+}
+
+impl<T: DatabaseDocument> SmartDocumentReference<T> {
+    /// Returns the document id without query the database
+    pub fn as_ref_id(&self) -> &ObjectId {
+        match self {
+            SmartDocumentReference::Id(document_id) => document_id,
+            SmartDocumentReference::Document(document) => document.get_id(),
+        }
+    }
+
+    /// Returns a reference of the document
+    ///
+    /// if it is Document(T) then its reference is returned,
+    /// otherwise, a query on the database is made
+    pub async fn as_document_ref(&mut self) -> DatabaseResult<&T> {
+        match self {
+            SmartDocumentReference::Id(document_id) => {
+                let document = T::find_one(doc! {"_id": document_id.clone()})
+                    .await
+                    .and_then(|op| {
+                        op.ok_or(DatabaseError::DocumentDoesNotExist(document_id.clone()))
+                    })?;
+                *self = SmartDocumentReference::Document(document);
+                self.as_document_ref().await
+            }
+            SmartDocumentReference::Document(document) => Ok(document),
+        }
+    }
+
+    /// Returns a mutable reference of the document
+    ///
+    /// if it is Document(T) then its reference is returned,
+    /// otherwise, a query on the database is made
+    pub async fn as_document_ref_mut(&mut self) -> DatabaseResult<&mut T> {
+        match self {
+            SmartDocumentReference::Id(document_id) => {
+                let document = T::find_one(doc! {"_id": document_id.clone()})
+                    .await
+                    .and_then(|op| {
+                        op.ok_or(DatabaseError::DocumentDoesNotExist(document_id.clone()))
+                    })?;
+                *self = SmartDocumentReference::Document(document);
+                self.as_document_ref_mut().await
+            }
+            SmartDocumentReference::Document(document) => Ok(document),
+        }
+    }
+
+    /// Consumes the object and returns the document
+    pub async fn to_document(self) -> DatabaseResult<T> {
+        match self {
+            SmartDocumentReference::Id(document_id) => {
+                let document = T::find_one(doc! {"_id": document_id.clone()})
+                    .await
+                    .and_then(|op| {
+                        op.ok_or(DatabaseError::DocumentDoesNotExist(document_id.clone()))
+                    })?;
+                Ok(document)
+            }
+            SmartDocumentReference::Document(document) => Ok(document),
+        }
+    }
+}
+
+impl<T: DatabaseDocument> From<ObjectId> for SmartDocumentReference<T> {
+    fn from(value: ObjectId) -> Self {
+        Self::Id(value)
+    }
+}
+
+impl<T: DatabaseDocument> From<&ObjectId> for SmartDocumentReference<T> {
+    fn from(value: &ObjectId) -> Self {
+        Self::Id(*value)
+    }
+}
+
+impl<T: DatabaseDocument> From<T> for SmartDocumentReference<T> {
+    fn from(value: T) -> Self {
+        Self::Document(value)
+    }
+}

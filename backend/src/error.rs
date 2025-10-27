@@ -16,16 +16,17 @@
 //! Each enum variant has an associated Result type for syntactic sugar.  
 
 use axum::{extract::rejection::JsonRejection, http::StatusCode, response::IntoResponse};
+use bson::oid::ObjectId;
 use serde::Serialize;
 use thiserror::Error;
 use tracing::error;
 
 use crate::types::AppJson;
 
-type AppResult<T> = Result<T, AppError>;
-type ServiceResult<T> = Result<T, ServiceAppError>;
-type AuthResult<T> = Result<T, AuthError>;
-type DatabaseResult<T> = Result<T, DatabaseError>;
+pub type AppResult<T> = Result<T, AppError>;
+pub type ServiceResult<T> = Result<T, ServiceAppError>;
+pub type AuthResult<T> = Result<T, AuthError>;
+pub type DatabaseResult<T> = Result<T, DatabaseError>;
 
 /// Enumeration of different error typologies that the application
 /// can return to the client.
@@ -176,12 +177,6 @@ impl AuthError {
 pub enum DatabaseError {
     #[error("MongoDB API error: {0}")]
     MongoDBApiError(#[from] mongodb::error::Error),
-    /// When an operation over a transaction is executed but the transaction is not started yet
-    #[error("Transaction is not started, the operation cannot be done")]
-    TransactionNotStarted,
-    /// When an operation over a transaction is executed but the transaction is already committed
-    #[error("Transaction is closed, the operation cannot be done")]
-    TransactionClosed,
     /// When an operation over a transaction fails
     #[error("Transaction is failed: {0}")]
     TransactionError(String),
@@ -189,4 +184,8 @@ pub enum DatabaseError {
     DocumentHasAlreadyAnId,
     #[error("Object id is invalid")]
     InvalidObjectId,
+    #[error("Client is not connected to the cluster")]
+    ClientNotConnected,
+    #[error("Document with id {0} does not exist")]
+    DocumentDoesNotExist(ObjectId),
 }
