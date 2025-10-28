@@ -7,7 +7,10 @@ use axum::{
 };
 use tokio::task_local;
 
-use crate::{DatabaseServiceTrait, EnvironmentServiceTrait, error::AppError};
+use crate::{
+    DatabaseService, DatabaseServiceTrait, EnvironmentServiceTrait, ServiceResult,
+    error::{AppError, ServiceAppError},
+};
 
 /// JSON extractor wrapping `axum::Json`.
 /// This makes it easy to override the rejection and provide our
@@ -32,17 +35,26 @@ where
 ///
 /// According to documentation https://github.com/tokio-rs/axum/blob/main/examples/dependency-injection/src/main.rs
 /// it is recommended to use dyn trait to leverage on dependency injection
+///
+/// However, DatabaseServiceTrait cannot be used with dyn because it contains
+/// generics. Therefore, we must use generic as well.
 #[derive(Clone)]
-pub struct AppState {
+pub struct AppState<T>
+where
+    T: DatabaseServiceTrait + Clone,
+{
     pub environment_service: Arc<dyn EnvironmentServiceTrait>,
-    pub database_service: Arc<dyn DatabaseServiceTrait>,
+    pub database_service: Arc<T>,
 }
 
-impl AppState {
+impl<T> AppState<T>
+where
+    T: DatabaseServiceTrait + Clone,
+{
     pub fn new(
         environment_service: Arc<dyn EnvironmentServiceTrait>,
-        database_service: Arc<dyn DatabaseServiceTrait>,
-    ) -> AppState {
+        database_service: Arc<T>,
+    ) -> AppState<T> {
         AppState {
             environment_service,
             database_service,
@@ -51,10 +63,11 @@ impl AppState {
 }
 
 // Implement FromRequestParts trait to use the state in the application routers
-impl<S> FromRequestParts<S> for AppState
+impl<S, T> FromRequestParts<S> for AppState<T>
 where
     Self: FromRef<S>,
     S: Send + Sync,
+    T: DatabaseServiceTrait + Clone,
 {
     type Rejection = AppError;
 
@@ -65,6 +78,22 @@ where
 
 // Declare task local variable so that each request can access the AppState without
 // passing to to each method call
+//
+// We need to speficy the concrete type that implements DatabaseService, this prevents
+// dynamically dispatching DatabaseService.
+// TODO: find a way to avoid using DatabaseService. Hint: via macro or definition of that
+// variable dynamically in the main module
 task_local! {
-    static APP_STATE: AppState;
+    static APP_STATE: AppState<DatabaseService>;
+}
+
+pub fn get_database_service() -> ServiceResult<Arc<DatabaseService>> {
+    if cfg!(test) {
+        Ok(Arc::new(DatabaseService::default()))
+    } else {
+        // We use try_with to handle result instead of panicking if the variable has not been set
+        APP_STATE
+            .try_with(|state| Arc::clone(&state.database_service))
+            .map_err(|e| ServiceAppError::AppStateError(e.to_string()))
+    }
 }

@@ -2,7 +2,7 @@ use bson::{Document, oid::ObjectId};
 use mongodb::{ClientSession, Collection, Database};
 use serde::Serialize;
 
-use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocument};
+use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocumentTrait};
 
 /// Wraps database operations inside the transaction allowing to commit or abort everything
 pub struct DatabaseTransaction {
@@ -37,14 +37,14 @@ impl DatabaseTransaction {
     /// database object
     fn get_collection<T>(&self) -> Collection<T>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         self.database.collection::<T>(T::collection_name())
     }
 
     pub async fn insert_one<T>(&mut self, document: &T) -> DatabaseResult<ObjectId>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         let query_result = collection
@@ -77,7 +77,7 @@ impl DatabaseTransaction {
 
     pub async fn insert_many<T>(&mut self, documents: Vec<&T>) -> DatabaseResult<Vec<ObjectId>>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         let query_result = collection
@@ -109,7 +109,7 @@ impl DatabaseTransaction {
 
     pub async fn update_one<T>(&mut self, query: Document, update: Document) -> DatabaseResult<()>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         collection
@@ -121,7 +121,7 @@ impl DatabaseTransaction {
 
     pub async fn update_many<T>(&mut self, query: Document, update: Document) -> DatabaseResult<()>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         collection
@@ -133,7 +133,7 @@ impl DatabaseTransaction {
 
     pub async fn replace_one<T>(&mut self, query: Document, replacement: &T) -> DatabaseResult<()>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         collection
@@ -145,7 +145,7 @@ impl DatabaseTransaction {
 
     pub async fn delete_one<T>(&mut self, filter: Document) -> DatabaseResult<()>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         collection
@@ -157,7 +157,7 @@ impl DatabaseTransaction {
 
     pub async fn delete_many<T>(&mut self, filter: Document) -> DatabaseResult<()>
     where
-        T: DatabaseDocument + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
     {
         let collection = self.get_collection::<T>();
         collection

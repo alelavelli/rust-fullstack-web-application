@@ -9,13 +9,15 @@ use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
 
-use crate::types::AppState;
+use crate::{DatabaseServiceTrait, types::AppState};
 
 /// CORS Layer for the application
 ///
 /// In this simple version, we allow everything,
 /// for production code the scope can be narrowed
-pub fn add_cors_middleware(router: Router<AppState>) -> Router<AppState> {
+pub fn add_cors_middleware<T: DatabaseServiceTrait + Clone + 'static>(
+    router: Router<AppState<T>>,
+) -> Router<AppState<T>> {
     router.layer(
         CorsLayer::new()
             .allow_origin(Any)
@@ -25,11 +27,11 @@ pub fn add_cors_middleware(router: Router<AppState>) -> Router<AppState> {
 }
 
 /// Add logging layer to record the requests log
-pub fn add_logging_middleware(
-    router: Router<AppState>,
+pub fn add_logging_middleware<T: DatabaseServiceTrait + Clone + 'static>(
+    router: Router<AppState<T>>,
     include_headers: bool,
     logging_level: tracing::Level,
-) -> Router<AppState> {
+) -> Router<AppState<T>> {
     router.layer(
         TraceLayer::new_for_http()
             .make_span_with(DefaultMakeSpan::new().include_headers(include_headers))

@@ -15,7 +15,7 @@ use crate::{
 /// According to MongoDB documentation https://www.mongodb.com/docs/drivers/rust/current/fundamentals/performance/
 /// the client instance must be shared among threads, therefore, the database service
 /// will be part of the app state.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DatabaseService {
     client: Option<Client>,
     database_name: String,

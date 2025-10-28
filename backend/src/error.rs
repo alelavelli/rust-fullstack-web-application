@@ -126,6 +126,8 @@ pub enum ServiceAppError {
     /// Error derived from the interaction with the object storage
     #[error("Object storage error: {0}")]
     ObjectStorageError(String),
+    #[error("Application state error: {0}")]
+    AppStateError(String),
 }
 
 #[derive(Error, Debug)]
@@ -188,4 +190,8 @@ pub enum DatabaseError {
     ClientNotConnected,
     #[error("Document with id {0} does not exist")]
     DocumentDoesNotExist(ObjectId),
+    #[error("Document is not valid because it's missing some fields")]
+    DocumentNotValid(String),
+    #[error("DatabaseService is not available: {0}")]
+    DatabaseServiceError(String),
 }

@@ -5,8 +5,8 @@ use axum::{
     routing::{get, get_service},
 };
 use backend::{
-    AppState, DatabaseService, EnvironmentService, EnvironmentServiceTrait, FrontendMode,
-    add_cors_middleware, add_logging_middleware, health_handler,
+    AppState, DatabaseService, DatabaseServiceTrait, EnvironmentService, EnvironmentServiceTrait,
+    FrontendMode, add_cors_middleware, add_logging_middleware, health_handler,
 };
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
@@ -48,7 +48,7 @@ async fn main() {
 /// via fallback service.
 ///
 /// When frontend mode is external then the root returns standard 200 OK
-fn build_app(state: AppState) -> Router {
+fn build_app<T: DatabaseServiceTrait + Clone + 'static>(state: AppState<T>) -> Router {
     let mut app =
         if let FrontendMode::Integrated(path) = state.environment_service.get_frontend_mode() {
             tracing::info!("working with frontend mode `integrated` with path {path}");

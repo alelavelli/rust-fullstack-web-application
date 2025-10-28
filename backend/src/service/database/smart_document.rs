@@ -1,18 +1,18 @@
 use bson::oid::ObjectId;
 
-use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocument};
+use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocumentTrait};
 use mongodb::bson::doc;
 
 /// Enum that caches a mongodb document so that it can be
 /// accessed reading it repeatedly without doing an additional query
 /// to the database
 #[derive(Clone)]
-pub enum SmartDocumentReference<T: DatabaseDocument> {
+pub enum SmartDocumentReference<T: DatabaseDocumentTrait> {
     Id(ObjectId),
     Document(T),
 }
 
-impl<T: DatabaseDocument> SmartDocumentReference<T> {
+impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     /// Returns the document id without query the database
     pub fn as_ref_id(&self) -> &ObjectId {
         match self {
@@ -69,19 +69,19 @@ impl<T: DatabaseDocument> SmartDocumentReference<T> {
     }
 }
 
-impl<T: DatabaseDocument> From<ObjectId> for SmartDocumentReference<T> {
+impl<T: DatabaseDocumentTrait> From<ObjectId> for SmartDocumentReference<T> {
     fn from(value: ObjectId) -> Self {
         Self::Id(value)
     }
 }
 
-impl<T: DatabaseDocument> From<&ObjectId> for SmartDocumentReference<T> {
+impl<T: DatabaseDocumentTrait> From<&ObjectId> for SmartDocumentReference<T> {
     fn from(value: &ObjectId) -> Self {
         Self::Id(*value)
     }
 }
 
-impl<T: DatabaseDocument> From<T> for SmartDocumentReference<T> {
+impl<T: DatabaseDocumentTrait> From<T> for SmartDocumentReference<T> {
     fn from(value: T) -> Self {
         Self::Document(value)
     }
