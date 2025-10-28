@@ -1,10 +1,8 @@
-use crate::{
-    DatabaseResult, DatabaseServiceTrait, error::DatabaseError, types::get_database_service,
-};
-use bson::{Document, oid::ObjectId};
-
+use crate::{DatabaseResult, DatabaseServiceTrait, error::DatabaseError};
+use bson::oid::ObjectId;
 use paste::paste;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use std::sync::Arc;
 
 /// Trait that defines the behavior for each collection in database.
 ///
@@ -75,16 +73,19 @@ macro_rules! database_document {
         // creation of builder
         paste! {
             #[derive(Default)]
-            pub struct [<$struct_name Builder>] {
+            pub struct [<$struct_name Builder>]<T>
+            where T: DatabaseServiceTrait {
+                database_service: Arc<T>,
                 $(
                     $field_name: Option<$field_type>,
                 )*
             }
 
             // implementation of methods that allow to set fields and build the document
-            impl [<$struct_name Builder>] {
-                pub fn new() -> Self {
+            impl<T> [<$struct_name Builder>]<T>  where T: DatabaseServiceTrait{
+                pub fn new(database_service: Arc<T>) -> Self {
                     Self {
+                        database_service,
                         $(
                             $field_name: None,
                         )*
@@ -111,9 +112,7 @@ macro_rules! database_document {
                         )*
                     };
 
-                    let database_service = get_database_service()
-                        .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
-                    database_service.save_document::<$struct_name>(document).await
+                    self.database_service.save_document::<$struct_name>(document).await
                 }
 
             }

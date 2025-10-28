@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use bson::oid::ObjectId;
 
 use crate::{
-    DatabaseResult, DatabaseServiceTrait, error::DatabaseError, get_database_service,
+    DatabaseResult, DatabaseServiceTrait, error::DatabaseError,
     service::database::document::DatabaseDocumentTrait,
 };
 use mongodb::bson::doc;
@@ -28,11 +30,12 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     ///
     /// if it is Document(T) then its reference is returned,
     /// otherwise, a query on the database is made
-    pub async fn as_document_ref(&mut self) -> DatabaseResult<&T> {
+    pub async fn as_document_ref(
+        &mut self,
+        database_service: Arc<impl DatabaseServiceTrait>,
+    ) -> DatabaseResult<&T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let database_service = get_database_service()
-                    .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
                 let document = database_service
                     .find_one::<T>(doc! {"_id": *document_id})
                     .await
@@ -51,11 +54,12 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     ///
     /// if it is Document(T) then its reference is returned,
     /// otherwise, a query on the database is made
-    pub async fn as_document_ref_mut(&mut self) -> DatabaseResult<&mut T> {
+    pub async fn as_document_ref_mut(
+        &mut self,
+        database_service: Arc<impl DatabaseServiceTrait>,
+    ) -> DatabaseResult<&mut T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let database_service = get_database_service()
-                    .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
                 let document = database_service
                     .find_one::<T>(doc! {"_id": *document_id})
                     .await
@@ -71,11 +75,12 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     }
 
     /// Consumes the object and returns the document
-    pub async fn to_document(self) -> DatabaseResult<T> {
+    pub async fn to_document(
+        self,
+        database_service: Arc<impl DatabaseServiceTrait>,
+    ) -> DatabaseResult<T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let database_service = get_database_service()
-                    .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
                 let document = database_service
                     .find_one::<T>(doc! {"_id": document_id})
                     .await

@@ -40,8 +40,8 @@ where
 /// generics. Therefore, we must use generic as well.
 #[derive(Clone)]
 pub struct AppState<T>
-where
-    T: DatabaseServiceTrait + Clone,
+//where
+//    T: DatabaseServiceTrait + Clone,
 {
     pub environment_service: Arc<dyn EnvironmentServiceTrait>,
     pub database_service: Arc<T>,
@@ -73,27 +73,5 @@ where
 
     async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         Ok(Self::from_ref(state))
-    }
-}
-
-// Declare task local variable so that each request can access the AppState without
-// passing to to each method call
-//
-// We need to speficy the concrete type that implements DatabaseService, this prevents
-// dynamically dispatching DatabaseService.
-// TODO: find a way to avoid using DatabaseService. Hint: via macro or definition of that
-// variable dynamically in the main module
-task_local! {
-    static APP_STATE: AppState<DatabaseService>;
-}
-
-pub fn get_database_service() -> ServiceResult<Arc<DatabaseService>> {
-    if cfg!(test) {
-        Ok(Arc::new(DatabaseService::default()))
-    } else {
-        // We use try_with to handle result instead of panicking if the variable has not been set
-        APP_STATE
-            .try_with(|state| Arc::clone(&state.database_service))
-            .map_err(|e| ServiceAppError::AppStateError(e.to_string()))
     }
 }
