@@ -15,12 +15,6 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 pub trait DatabaseDocumentTrait: Sized + Send + Sync + Serialize + DeserializeOwned {
     fn get_id(&self) -> &ObjectId;
     fn collection_name() -> &'static str;
-
-    fn find_one(
-        query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<Self>>> + Send {
-        async { todo!() }
-    }
 }
 
 /// The macro generates struct that implements DatabaseDocumentTrait trait

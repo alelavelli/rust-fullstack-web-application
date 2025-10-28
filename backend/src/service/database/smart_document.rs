@@ -1,6 +1,9 @@
 use bson::oid::ObjectId;
 
-use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocumentTrait};
+use crate::{
+    DatabaseResult, DatabaseServiceTrait, error::DatabaseError, get_database_service,
+    service::database::document::DatabaseDocumentTrait,
+};
 use mongodb::bson::doc;
 
 /// Enum that caches a mongodb document so that it can be
@@ -28,11 +31,17 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     pub async fn as_document_ref(&mut self) -> DatabaseResult<&T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let document = T::find_one(doc! {"_id": *document_id})
+                let database_service = get_database_service()
+                    .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
+                let document = database_service
+                    .find_one::<T>(doc! {"_id": *document_id})
                     .await
                     .and_then(|op| op.ok_or(DatabaseError::DocumentDoesNotExist(*document_id)))?;
                 *self = SmartDocumentReference::Document(document);
-                self.as_document_ref().await
+                match self {
+                    SmartDocumentReference::Id(_) => unreachable!(),
+                    SmartDocumentReference::Document(document) => Ok(document),
+                }
             }
             SmartDocumentReference::Document(document) => Ok(document),
         }
@@ -45,11 +54,17 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     pub async fn as_document_ref_mut(&mut self) -> DatabaseResult<&mut T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let document = T::find_one(doc! {"_id": *document_id})
+                let database_service = get_database_service()
+                    .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
+                let document = database_service
+                    .find_one::<T>(doc! {"_id": *document_id})
                     .await
                     .and_then(|op| op.ok_or(DatabaseError::DocumentDoesNotExist(*document_id)))?;
                 *self = SmartDocumentReference::Document(document);
-                self.as_document_ref_mut().await
+                match self {
+                    SmartDocumentReference::Id(_) => unreachable!(),
+                    SmartDocumentReference::Document(document) => Ok(document),
+                }
             }
             SmartDocumentReference::Document(document) => Ok(document),
         }
@@ -59,7 +74,10 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     pub async fn to_document(self) -> DatabaseResult<T> {
         match self {
             SmartDocumentReference::Id(document_id) => {
-                let document = T::find_one(doc! {"_id": document_id})
+                let database_service = get_database_service()
+                    .map_err(|e| DatabaseError::DatabaseServiceError(e.to_string()))?;
+                let document = database_service
+                    .find_one::<T>(doc! {"_id": document_id})
                     .await
                     .and_then(|op| op.ok_or(DatabaseError::DocumentDoesNotExist(document_id)))?;
                 Ok(document)

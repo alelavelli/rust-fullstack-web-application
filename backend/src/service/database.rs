@@ -11,7 +11,7 @@ mod transaction;
 use async_trait::async_trait;
 use bson::Document;
 use mongodb::Database;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 pub use service::DatabaseService;
 
 /// Trait to define the database service behavior
@@ -30,6 +30,13 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
     async fn save_document<T>(&self, document: Document) -> DatabaseResult<T>
     where
         T: DatabaseDocumentTrait + Send + Sync + Serialize,
+    {
+        todo!()
+    }
+
+    async fn find_one<T>(&self, query: Document) -> DatabaseResult<Option<T>>
+    where
+        T: DatabaseDocumentTrait + Send + Sync,
     {
         todo!()
     }
