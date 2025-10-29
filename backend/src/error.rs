@@ -194,4 +194,6 @@ pub enum DatabaseError {
     DocumentNotValid(String),
     #[error("DatabaseService is not available: {0}")]
     DatabaseServiceError(String),
+    #[error("Error encountered during a database operation: {0}")]
+    DatabaseOperationError(String),
 }

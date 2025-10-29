@@ -8,36 +8,35 @@ mod service;
 mod smart_document;
 mod transaction;
 
-use async_trait::async_trait;
-use bson::Document;
-use mongodb::Database;
+use bson::{Document, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 pub use service::DatabaseService;
 
 /// Trait to define the database service behavior
-#[async_trait]
 pub trait DatabaseServiceTrait: Send + Sync + Default {
-    async fn connect(&mut self) -> DatabaseResult<()>;
+    fn connect(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
 
-    async fn shutdown(&mut self) -> DatabaseResult<()>;
+    fn shutdown(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
 
     fn get_db_name(&self) -> &str;
 
-    fn get_database(&self) -> DatabaseResult<Database>;
+    fn new_transaction(
+        &self,
+    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>>;
 
-    async fn new_transaction(&self) -> DatabaseResult<DatabaseTransaction>;
-
-    async fn save_document<T>(&self, document: Document) -> DatabaseResult<T>
+    /// Insert the mongodb document in the collection specified by T
+    /// and return the instance of the inserted document
+    fn insert_one<T>(
+        &self,
+        document: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
     where
-        T: DatabaseDocumentTrait + Send + Sync + Serialize,
-    {
-        todo!()
-    }
+        T: DatabaseDocumentTrait + Send + Sync + Serialize;
 
-    async fn find_one<T>(&self, query: Document) -> DatabaseResult<Option<T>>
+    fn find_one<T>(
+        &self,
+        query: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>>
     where
-        T: DatabaseDocumentTrait + Send + Sync,
-    {
-        todo!()
-    }
+        T: DatabaseDocumentTrait + Send + Sync;
 }

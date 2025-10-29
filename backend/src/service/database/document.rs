@@ -105,14 +105,20 @@ macro_rules! database_document {
                 pub async fn build(self) -> DatabaseResult<$struct_name> {
                     let document = mongodb::bson::doc! {
                         $(
-                            stringify!($field_name): self.$field_name
+                            stringify!($field_name): self.$field_name.clone()
                                 .ok_or_else(|| DatabaseError::DocumentNotValid(
                                     format!("Missing {}", stringify!($field_name))
                                 ))?,
                         )*
                     };
 
-                    self.database_service.save_document::<$struct_name>(document).await
+                    let doc_id = self.database_service.insert_one::<$struct_name>(document).await?;
+                    Ok($struct_name {
+                        id: doc_id,
+                        $(
+                            $field_name: self.$field_name.unwrap(),
+                        )*
+                    })
                 }
 
             }

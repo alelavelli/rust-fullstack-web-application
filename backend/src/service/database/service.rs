@@ -1,10 +1,14 @@
 use async_trait::async_trait;
-use mongodb::{Client, Database, options::ClientOptions};
+use bson::{Document, oid::ObjectId};
+use mongodb::{Client, Collection, Database, options::ClientOptions};
+use serde::Serialize;
 
 use crate::{
     DatabaseResult,
     error::DatabaseError,
-    service::database::{DatabaseServiceTrait, transaction::DatabaseTransaction},
+    service::database::{
+        DatabaseServiceTrait, document::DatabaseDocumentTrait, transaction::DatabaseTransaction,
+    },
 };
 
 /// Database service struct
@@ -29,6 +33,21 @@ impl DatabaseService {
             database_name,
             connection_string,
         }
+    }
+
+    fn get_database(&self) -> DatabaseResult<Database> {
+        if let Some(client) = &self.client {
+            Ok(client.database(&self.database_name))
+        } else {
+            Err(DatabaseError::ClientNotConnected)
+        }
+    }
+
+    fn get_collection<T>(&self) -> DatabaseResult<Collection<T>>
+    where
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
+    {
+        Ok(self.get_database()?.collection::<T>(T::collection_name()))
     }
 }
 
@@ -56,40 +75,68 @@ impl Default for DatabaseService {
     }
 }
 
-#[async_trait]
 impl DatabaseServiceTrait for DatabaseService {
-    async fn connect(&mut self) -> DatabaseResult<()> {
-        if self.client.is_none() {
-            let client_options = ClientOptions::parse(self.connection_string.clone()).await?;
-            self.client = Some(Client::with_options(client_options)?);
+    fn connect(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>> {
+        async {
+            if self.client.is_none() {
+                let client_options = ClientOptions::parse(self.connection_string.clone()).await?;
+                self.client = Some(Client::with_options(client_options)?);
+            }
+            Ok(())
         }
-        Ok(())
     }
 
-    async fn shutdown(&mut self) -> DatabaseResult<()> {
-        if let Some(client) = self.client.take() {
-            Client::shutdown(client).await;
+    fn shutdown(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>> {
+        async {
+            if let Some(client) = self.client.take() {
+                Client::shutdown(client).await;
+            }
+            Ok(())
         }
-        Ok(())
     }
 
     fn get_db_name(&self) -> &str {
         &self.database_name
     }
 
-    fn get_database(&self) -> DatabaseResult<Database> {
-        if let Some(client) = &self.client {
-            Ok(client.database(&self.database_name))
-        } else {
-            Err(DatabaseError::ClientNotConnected)
+    fn new_transaction(
+        &self,
+    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>> {
+        async {
+            if let Some(client) = &self.client {
+                DatabaseTransaction::new(client.start_session().await?, &self.database_name).await
+            } else {
+                Err(DatabaseError::ClientNotConnected)
+            }
         }
     }
 
-    async fn new_transaction(&self) -> DatabaseResult<DatabaseTransaction> {
-        if let Some(client) = &self.client {
-            DatabaseTransaction::new(client.start_session().await?, &self.database_name).await
-        } else {
-            Err(DatabaseError::ClientNotConnected)
+    fn insert_one<T>(
+        &self,
+        document: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
+    where
+        T: DatabaseDocumentTrait + Send + Sync + Serialize,
+    {
+        async {
+            let collection = self.get_database()?.collection(T::collection_name());
+            let query_result = collection.insert_one(document).await;
+            query_result.map(|inner| {
+                inner
+                    .inserted_id
+                    .as_object_id()
+                    .ok_or(DatabaseError::InvalidObjectId)
+            })?
         }
+    }
+
+    fn find_one<T>(
+        &self,
+        query: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>>
+    where
+        T: DatabaseDocumentTrait + Send + Sync,
+    {
+        async { todo!() }
     }
 }
