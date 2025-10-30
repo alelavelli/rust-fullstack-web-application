@@ -100,7 +100,7 @@ macro_rules! database_document {
 
                 /// Build the database document by creating it on the database via
                 /// the database service
-                pub async fn build(self, transaction: &mut DatabaseTransaction) -> DatabaseResult<$struct_name> {
+                pub async fn build(self, transaction: Option<&mut DatabaseTransaction>) -> DatabaseResult<$struct_name> {
                     let document = mongodb::bson::doc! {
                         $(
                             stringify!($field_name): self.$field_name.clone()
@@ -110,7 +110,7 @@ macro_rules! database_document {
                         )*
                     };
 
-                    let doc_id = self.database_service.insert_one::<$struct_name>(document, Some(transaction.get_mut_session())).await?;
+                    let doc_id = self.database_service.insert_one::<$struct_name>(document, transaction.map(|inner_transaction| inner_transaction.get_mut_session())).await?;
                     Ok($struct_name {
                         id: doc_id,
                         $(
