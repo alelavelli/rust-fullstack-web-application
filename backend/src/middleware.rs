@@ -2,6 +2,8 @@
 //! functions that takes a router, add the middleware
 //! as new layer and then returns it
 
+mod transaction;
+
 use axum::Router;
 use tower_http::{
     LatencyUnit,
@@ -9,7 +11,9 @@ use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
 
-use crate::{DatabaseServiceTrait, types::AppState};
+use crate::{
+    DatabaseServiceTrait, middleware::transaction::mongodb_transaction_middleware, types::AppState,
+};
 
 /// CORS Layer for the application
 ///
@@ -42,4 +46,14 @@ pub fn add_logging_middleware<T: DatabaseServiceTrait + Clone + 'static>(
                     .latency_unit(LatencyUnit::Micros),
             ),
     )
+}
+
+pub fn add_mongodb_transaction_middleware<T: DatabaseServiceTrait + Clone + 'static>(
+    state: AppState<T>,
+    router: Router<AppState<T>>,
+) -> Router<AppState<T>> {
+    router.layer(axum::middleware::from_fn_with_state(
+        state,
+        mongodb_transaction_middleware,
+    ))
 }

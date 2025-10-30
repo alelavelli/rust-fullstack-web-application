@@ -1,7 +1,4 @@
-use crate::{
-    DatabaseResult,
-    service::database::{document::DatabaseDocumentTrait, transaction::DatabaseTransaction},
-};
+use crate::{DatabaseResult, service::database::document::DatabaseDocumentTrait};
 
 mod document;
 mod service;
@@ -9,8 +6,9 @@ mod smart_document;
 mod transaction;
 
 use bson::{Document, oid::ObjectId};
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Serialize, de::DeserializeOwned};
 pub use service::DatabaseService;
+pub use transaction::DatabaseTransaction;
 
 /// Trait to define the database service behavior
 pub trait DatabaseServiceTrait: Send + Sync + Default {
@@ -22,7 +20,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
 
     fn new_transaction(
         &self,
-    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>>;
+    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>> + Send;
 
     /// Insert the mongodb document in the collection specified by T
     /// and return the id of the inserted document

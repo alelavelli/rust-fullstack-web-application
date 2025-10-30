@@ -9,7 +9,9 @@ mod types;
 pub use enums::FrontendMode;
 pub use environment::{EnvironmentService, EnvironmentServiceTrait};
 pub use error::{AppResult, AuthResult, DatabaseResult, ServiceResult};
-pub use middleware::{add_cors_middleware, add_logging_middleware};
+pub use middleware::{
+    add_cors_middleware, add_logging_middleware, add_mongodb_transaction_middleware,
+};
 pub use router::health_handler;
 pub use service::{DatabaseService, DatabaseServiceTrait};
 pub use types::AppState;

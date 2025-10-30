@@ -97,7 +97,7 @@ impl DatabaseServiceTrait for DatabaseService {
 
     fn new_transaction(
         &self,
-    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>> {
+    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>> + Send {
         async {
             if let Some(client) = &self.client {
                 DatabaseTransaction::new(client.start_session().await?, &self.database_name).await

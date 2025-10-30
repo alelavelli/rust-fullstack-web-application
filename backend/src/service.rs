@@ -1,3 +1,3 @@
 mod database;
 
-pub use database::{DatabaseService, DatabaseServiceTrait};
+pub use database::{DatabaseService, DatabaseServiceTrait, DatabaseTransaction};

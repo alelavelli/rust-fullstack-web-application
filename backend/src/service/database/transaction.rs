@@ -2,7 +2,9 @@ use bson::{Document, oid::ObjectId};
 use mongodb::{ClientSession, Collection, Database};
 use serde::Serialize;
 
-use crate::{DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocumentTrait};
+use crate::{
+    DatabaseResult, error::DatabaseError, service::database::document::DatabaseDocumentTrait,
+};
 
 /// Wraps database operations inside the transaction allowing to commit or abort everything
 pub struct DatabaseTransaction {
@@ -21,14 +23,14 @@ impl DatabaseTransaction {
         Ok(DatabaseTransaction { session, database })
     }
 
-    /// Consumes the object and abort the transaction
-    pub async fn abort_transaction(mut self) -> DatabaseResult<()> {
+    /// Abort the transaction
+    pub async fn abort_transaction(&mut self) -> DatabaseResult<()> {
         self.session.abort_transaction().await?;
         Ok(())
     }
 
-    /// Consumes the object and commit the transaction
-    pub async fn commit_transaction(mut self) -> DatabaseResult<()> {
+    /// Commit the transaction
+    pub async fn commit_transaction(&mut self) -> DatabaseResult<()> {
         self.session.commit_transaction().await?;
         Ok(())
     }

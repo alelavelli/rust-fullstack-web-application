@@ -6,7 +6,8 @@ use axum::{
 };
 use backend::{
     AppState, DatabaseService, DatabaseServiceTrait, EnvironmentService, EnvironmentServiceTrait,
-    FrontendMode, add_cors_middleware, add_logging_middleware, health_handler,
+    FrontendMode, add_cors_middleware, add_logging_middleware, add_mongodb_transaction_middleware,
+    health_handler,
 };
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
@@ -72,6 +73,7 @@ fn build_app<T: DatabaseServiceTrait + Clone + 'static>(state: AppState<T>) -> R
 
     // Add middlewares to our application.
     // Layers are accessed from bottom to up, hence the order is very important
+    app = add_mongodb_transaction_middleware(state.clone(), app);
     app = add_logging_middleware(
         app,
         state.environment_service.get_logging_include_headers(),
