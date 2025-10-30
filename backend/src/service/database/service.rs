@@ -1,6 +1,9 @@
-use async_trait::async_trait;
 use bson::{Document, oid::ObjectId};
-use mongodb::{Client, Collection, Database, options::ClientOptions};
+use futures::TryStreamExt;
+use mongodb::{
+    Client, Database,
+    options::{ClientOptions, FindOneOptions, FindOptions},
+};
 use serde::Serialize;
 
 use crate::{
@@ -41,13 +44,6 @@ impl DatabaseService {
         } else {
             Err(DatabaseError::ClientNotConnected)
         }
-    }
-
-    fn get_collection<T>(&self) -> DatabaseResult<Collection<T>>
-    where
-        T: DatabaseDocumentTrait + Send + Sync + Serialize,
-    {
-        Ok(self.get_database()?.collection::<T>(T::collection_name()))
     }
 }
 
@@ -116,7 +112,7 @@ impl DatabaseServiceTrait for DatabaseService {
         document: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
     where
-        T: DatabaseDocumentTrait + Send + Sync + Serialize,
+        T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection(T::collection_name());
@@ -130,13 +126,179 @@ impl DatabaseServiceTrait for DatabaseService {
         }
     }
 
+    fn insert_many<T>(
+        &self,
+        documents: Vec<Document>,
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection(T::collection_name());
+            let query_result = collection.insert_many(documents).await;
+            query_result.map(|inner| {
+                inner
+                    .inserted_ids
+                    .values()
+                    .map(|elem| elem.as_object_id().ok_or(DatabaseError::InvalidObjectId))
+                    .collect::<DatabaseResult<Vec<ObjectId>>>()
+            })?
+        }
+    }
+
     fn find_one<T>(
         &self,
         query: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>>
     where
-        T: DatabaseDocumentTrait + Send + Sync,
+        T: DatabaseDocumentTrait,
     {
-        async { todo!() }
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            Ok(collection.find_one(query).await?)
+        }
+    }
+
+    fn find_many<T>(
+        &self,
+        query: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            Ok(collection.find(query).await?.try_collect().await?)
+        }
+    }
+
+    fn find_one_projection<T, P>(
+        &self,
+        query: Document,
+        projection: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>>
+    where
+        T: DatabaseDocumentTrait,
+        P: Send + Sync + Serialize + serde::de::DeserializeOwned,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            let query_options = FindOneOptions::builder().projection(projection).build();
+            let result: Option<P> = collection
+                .clone_with_type::<P>()
+                .find_one(query)
+                .with_options(query_options)
+                .await?;
+            Ok(result)
+        }
+    }
+
+    fn find_many_projection<T, P>(
+        &self,
+        query: Document,
+        projection: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>>
+    where
+        T: DatabaseDocumentTrait,
+        P: Send + Sync + Serialize + serde::de::DeserializeOwned,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            let query_options = FindOptions::builder().projection(projection).build();
+            let result: Vec<P> = collection
+                .clone_with_type::<P>()
+                .find(query)
+                .with_options(query_options)
+                .await?
+                .try_collect()
+                .await?;
+            Ok(result)
+        }
+    }
+
+    fn count_documents<T>(
+        &self,
+        query: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<u64>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            let result: u64 = collection.count_documents(query).await?;
+            Ok(result)
+        }
+    }
+
+    fn update_one<T>(
+        &self,
+        query: Document,
+        update: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            collection.update_one(query, update).await?;
+            Ok(())
+        }
+    }
+
+    fn update_many<T>(
+        &self,
+        query: Document,
+        update: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            collection.update_many(query, update).await?;
+            Ok(())
+        }
+    }
+
+    fn delete_one<T>(
+        &self,
+        query: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            collection.delete_one(query).await?;
+            Ok(())
+        }
+    }
+
+    fn delete_many<T>(
+        &self,
+        query: Document,
+    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            collection.delete_many(query).await?;
+            Ok(())
+        }
+    }
+
+    fn aggreagte<T>(
+        &self,
+        pipeline: Vec<Document>,
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<Document>>>
+    where
+        T: DatabaseDocumentTrait,
+    {
+        async {
+            let collection = self.get_database()?.collection::<T>(T::collection_name());
+            let result = collection.aggregate(pipeline).await?.try_collect().await?;
+            Ok(result)
+        }
     }
 }
