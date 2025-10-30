@@ -6,11 +6,24 @@ mod smart_document;
 mod transaction;
 
 use bson::{Document, oid::ObjectId};
+use mongodb::ClientSession;
 use serde::{Serialize, de::DeserializeOwned};
 pub use service::DatabaseService;
 pub use transaction::DatabaseTransaction;
 
 /// Trait to define the database service behavior
+///
+/// The first two methods allows to open and close the connection with the database,
+/// while the other methods allows to start a new transaction and perform any other
+/// database operations.
+///
+/// Any database operation method requires generic T which implements
+/// DatabaseDocumentTrait that is used to get collection name and return
+/// the specific document struct.
+///
+/// The return error type is DatabaseError which contains all the possible
+/// error outcomes. It does not use ServiceAppError because it is a second
+/// level service that is used by other services.
 pub trait DatabaseServiceTrait: Send + Sync + Default {
     fn connect(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
 
@@ -27,6 +40,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
     fn insert_one<T>(
         &self,
         document: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
     where
         T: DatabaseDocumentTrait;
@@ -34,6 +48,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
     fn insert_many<T>(
         &self,
         documents: Vec<Document>,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>>
     where
         T: DatabaseDocumentTrait;
@@ -81,6 +96,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         query: Document,
         update: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait;
@@ -89,6 +105,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         query: Document,
         update: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait;
@@ -96,6 +113,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
     fn delete_one<T>(
         &self,
         query: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait;
@@ -103,6 +121,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
     fn delete_many<T>(
         &self,
         query: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait;

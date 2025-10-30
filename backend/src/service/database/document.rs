@@ -1,15 +1,13 @@
-use crate::{DatabaseResult, DatabaseServiceTrait, error::DatabaseError};
+use crate::{
+    DatabaseResult, DatabaseServiceTrait, error::DatabaseError,
+    service::database::DatabaseTransaction,
+};
 use bson::oid::ObjectId;
 use paste::paste;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::sync::Arc;
 
-/// Trait that defines the behavior for each collection in database.
-///
-/// Operations divide in methods and functions.
-/// Methods are save and delete and refers only to the current instance.
-///
-/// Functions are general and operate outside the instance
+/// Trait that defines the behavior for each collection in database
 pub trait DatabaseDocumentTrait: Sized + Send + Sync + Serialize + DeserializeOwned {
     fn get_id(&self) -> &ObjectId;
     fn collection_name() -> &'static str;
@@ -102,7 +100,7 @@ macro_rules! database_document {
 
                 /// Build the database document by creating it on the database via
                 /// the database service
-                pub async fn build(self) -> DatabaseResult<$struct_name> {
+                pub async fn build(self, transaction: &mut DatabaseTransaction) -> DatabaseResult<$struct_name> {
                     let document = mongodb::bson::doc! {
                         $(
                             stringify!($field_name): self.$field_name.clone()
@@ -112,7 +110,7 @@ macro_rules! database_document {
                         )*
                     };
 
-                    let doc_id = self.database_service.insert_one::<$struct_name>(document).await?;
+                    let doc_id = self.database_service.insert_one::<$struct_name>(document, Some(transaction.get_mut_session())).await?;
                     Ok($struct_name {
                         id: doc_id,
                         $(

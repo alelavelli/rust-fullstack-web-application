@@ -1,7 +1,7 @@
 use bson::{Document, oid::ObjectId};
 use futures::TryStreamExt;
 use mongodb::{
-    Client, Database,
+    Client, ClientSession, Database,
     options::{ClientOptions, FindOneOptions, FindOptions},
 };
 use serde::Serialize;
@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-/// Database service struct
+/// Database service struct using mongdb crate
 ///
 /// It connects to the database, creates session objects to perform transactions
 /// and provides collection objects.
@@ -100,7 +100,7 @@ impl DatabaseServiceTrait for DatabaseService {
     ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>> + Send {
         async {
             if let Some(client) = &self.client {
-                DatabaseTransaction::new(client.start_session().await?, &self.database_name).await
+                DatabaseTransaction::new(client.start_session().await?).await
             } else {
                 Err(DatabaseError::ClientNotConnected)
             }
@@ -110,13 +110,18 @@ impl DatabaseServiceTrait for DatabaseService {
     fn insert_one<T>(
         &self,
         document: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
     where
         T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection(T::collection_name());
-            let query_result = collection.insert_one(document).await;
+            let mut operation = collection.insert_one(document);
+            if let Some(session) = transaction_session {
+                operation = operation.session(session);
+            }
+            let query_result = operation.await;
             query_result.map(|inner| {
                 inner
                     .inserted_id
@@ -129,13 +134,18 @@ impl DatabaseServiceTrait for DatabaseService {
     fn insert_many<T>(
         &self,
         documents: Vec<Document>,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>>
     where
         T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection(T::collection_name());
-            let query_result = collection.insert_many(documents).await;
+            let mut operation = collection.insert_many(documents);
+            if let Some(session) = transaction_session {
+                operation = operation.session(session);
+            }
+            let query_result = operation.await;
             query_result.map(|inner| {
                 inner
                     .inserted_ids
@@ -234,13 +244,18 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         query: Document,
         update: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection::<T>(T::collection_name());
-            collection.update_one(query, update).await?;
+            let mut operation = collection.update_one(query, update);
+            if let Some(session) = transaction_session {
+                operation = operation.session(session);
+            }
+            operation.await?;
             Ok(())
         }
     }
@@ -249,13 +264,18 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         query: Document,
         update: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection::<T>(T::collection_name());
-            collection.update_many(query, update).await?;
+            let mut operation = collection.update_many(query, update);
+            if let Some(session) = transaction_session {
+                operation = operation.session(session);
+            }
+            operation.await?;
             Ok(())
         }
     }
@@ -263,13 +283,18 @@ impl DatabaseServiceTrait for DatabaseService {
     fn delete_one<T>(
         &self,
         query: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection::<T>(T::collection_name());
-            collection.delete_one(query).await?;
+            let mut operation = collection.delete_one(query);
+            if let Some(session) = transaction_session {
+                operation = operation.session(session);
+            }
+            operation.await?;
             Ok(())
         }
     }
@@ -277,13 +302,18 @@ impl DatabaseServiceTrait for DatabaseService {
     fn delete_many<T>(
         &self,
         query: Document,
+        transaction_session: Option<&mut ClientSession>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>>
     where
         T: DatabaseDocumentTrait,
     {
         async {
             let collection = self.get_database()?.collection::<T>(T::collection_name());
-            collection.delete_many(query).await?;
+            let mut operation = collection.delete_many(query);
+            if let Some(session) = transaction_session {
+                operation = operation.session(session);
+            }
+            operation.await?;
             Ok(())
         }
     }
