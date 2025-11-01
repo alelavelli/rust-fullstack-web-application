@@ -111,7 +111,7 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         document: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
+    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -135,7 +135,7 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         documents: Vec<Document>,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -159,7 +159,7 @@ impl DatabaseServiceTrait for DatabaseService {
     fn find_one<T>(
         &self,
         query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -172,7 +172,7 @@ impl DatabaseServiceTrait for DatabaseService {
     fn find_many<T>(
         &self,
         query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -186,7 +186,7 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         query: Document,
         projection: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>> + Send
     where
         T: DatabaseDocumentTrait,
         P: Send + Sync + Serialize + serde::de::DeserializeOwned,
@@ -207,7 +207,7 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         query: Document,
         projection: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>> + Send
     where
         T: DatabaseDocumentTrait,
         P: Send + Sync + Serialize + serde::de::DeserializeOwned,
@@ -229,7 +229,7 @@ impl DatabaseServiceTrait for DatabaseService {
     fn count_documents<T>(
         &self,
         query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<u64>>
+    ) -> impl std::future::Future<Output = DatabaseResult<u64>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -245,7 +245,7 @@ impl DatabaseServiceTrait for DatabaseService {
         query: Document,
         update: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -265,7 +265,7 @@ impl DatabaseServiceTrait for DatabaseService {
         query: Document,
         update: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -284,7 +284,7 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         query: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -303,7 +303,7 @@ impl DatabaseServiceTrait for DatabaseService {
         &self,
         query: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait,
     {
@@ -321,7 +321,7 @@ impl DatabaseServiceTrait for DatabaseService {
     fn aggreagte<T>(
         &self,
         pipeline: Vec<Document>,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<Document>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<Document>>> + Send
     where
         T: DatabaseDocumentTrait,
     {

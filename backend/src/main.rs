@@ -5,9 +5,8 @@ use axum::{
     routing::{get, get_service},
 };
 use backend::{
-    AppState, DatabaseService, DatabaseServiceTrait, EnvironmentService, EnvironmentServiceTrait,
-    FrontendMode, add_cors_middleware, add_logging_middleware, add_mongodb_transaction_middleware,
-    health_handler,
+    AppState, EnvironmentService, EnvironmentServiceTrait, FrontendMode, middleware, router,
+    service::database::{DatabaseService, DatabaseServiceTrait},
 };
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
@@ -29,7 +28,10 @@ async fn main() {
         environment_service.get_database_connection_string().into(),
     );
 
-    let app_state = AppState::new(Arc::new(environment_service), Arc::new(database_service));
+    let app_state = Arc::new(AppState::new(
+        Box::new(environment_service),
+        database_service,
+    ));
 
     // initialize tracing logging with level defined by the environment service
     tracing_subscriber::fmt()
@@ -49,7 +51,7 @@ async fn main() {
 /// via fallback service.
 ///
 /// When frontend mode is external then the root returns standard 200 OK
-fn build_app<T: DatabaseServiceTrait + Clone + 'static>(state: AppState<T>) -> Router {
+fn build_app<T: DatabaseServiceTrait + 'static>(state: Arc<AppState<T>>) -> Router {
     let mut app =
         if let FrontendMode::Integrated(path) = state.environment_service.get_frontend_mode() {
             tracing::info!("working with frontend mode `integrated` with path {path}");
@@ -62,24 +64,26 @@ fn build_app<T: DatabaseServiceTrait + Clone + 'static>(state: AppState<T>) -> R
                     ServeDir::new(path)
                         .not_found_service(ServeFile::new(Path::new(path).join("index.html"))),
                 ))
-                .route("/api/health", get(health_handler))
+                .route("/api/health", get(router::health_handler))
         } else {
             Router::new()
                 // `GET /` goes to `root`
-                .route("/", get(health_handler))
+                .route("/", get(router::health_handler))
         };
 
-    // TODO: add application routers
+    app = router::add_guest_router("/api/guest", app);
+    app = router::add_admin_router("/api/admin", app);
+    app = router::add_user_router("/api/user", app);
 
     // Add middlewares to our application.
     // Layers are accessed from bottom to up, hence the order is very important
-    app = add_mongodb_transaction_middleware(state.clone(), app);
-    app = add_logging_middleware(
+    app = middleware::add_mongodb_transaction_middleware(Arc::clone(&state), app);
+    app = middleware::add_logging_middleware(
         app,
         state.environment_service.get_logging_include_headers(),
         state.environment_service.get_logging_level(),
     );
-    app = add_cors_middleware(app);
+    app = middleware::add_cors_middleware(app);
 
     app.with_state(state)
 }

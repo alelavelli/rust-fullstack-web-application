@@ -3,8 +3,9 @@ use std::sync::Arc;
 use bson::oid::ObjectId;
 
 use crate::{
-    DatabaseResult, DatabaseServiceTrait, error::DatabaseError,
-    service::database::document::DatabaseDocumentTrait,
+    DatabaseResult,
+    error::DatabaseError,
+    service::database::{DatabaseServiceTrait, document::DatabaseDocumentTrait},
 };
 use mongodb::bson::doc;
 

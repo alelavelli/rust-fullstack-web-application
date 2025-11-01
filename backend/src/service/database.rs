@@ -1,6 +1,6 @@
 use crate::{DatabaseResult, service::database::document::DatabaseDocumentTrait};
 
-mod document;
+pub mod document;
 mod service;
 mod smart_document;
 mod transaction;
@@ -24,7 +24,7 @@ pub use transaction::DatabaseTransaction;
 /// The return error type is DatabaseError which contains all the possible
 /// error outcomes. It does not use ServiceAppError because it is a second
 /// level service that is used by other services.
-pub trait DatabaseServiceTrait: Send + Sync + Default {
+pub trait DatabaseServiceTrait: Send + Sync + Default + Clone {
     fn connect(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
 
     fn shutdown(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
@@ -41,7 +41,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         document: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>>
+    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -49,21 +49,21 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         documents: Vec<Document>,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
     where
         T: DatabaseDocumentTrait;
 
     fn find_one<T>(
         &self,
         query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>> + Send
     where
         T: DatabaseDocumentTrait;
 
     fn find_many<T>(
         &self,
         query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -71,7 +71,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         query: Document,
         projection: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>> + Send
     where
         T: DatabaseDocumentTrait,
         P: Send + Sync + Serialize + DeserializeOwned;
@@ -80,7 +80,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         query: Document,
         projection: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>> + Send
     where
         T: DatabaseDocumentTrait,
         P: Send + Sync + Serialize + DeserializeOwned;
@@ -88,7 +88,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
     fn count_documents<T>(
         &self,
         query: Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<u64>>
+    ) -> impl std::future::Future<Output = DatabaseResult<u64>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -97,7 +97,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         query: Document,
         update: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -106,7 +106,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         query: Document,
         update: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -114,7 +114,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         query: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -122,7 +122,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
         query: Document,
         transaction_session: Option<&mut ClientSession>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>>
+    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DatabaseDocumentTrait;
 
@@ -130,7 +130,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default {
         &self,
 
         pipeline: Vec<Document>,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<Document>>>
+    ) -> impl std::future::Future<Output = DatabaseResult<Vec<Document>>> + Send
     where
         T: DatabaseDocumentTrait;
 }

@@ -4,6 +4,8 @@
 
 mod transaction;
 
+use std::sync::Arc;
+
 use axum::Router;
 use tower_http::{
     LatencyUnit,
@@ -12,16 +14,17 @@ use tower_http::{
 };
 
 use crate::{
-    DatabaseServiceTrait, middleware::transaction::mongodb_transaction_middleware, types::AppState,
+    middleware::transaction::mongodb_transaction_middleware,
+    service::database::DatabaseServiceTrait, types::AppState,
 };
 
 /// CORS Layer for the application
 ///
 /// In this simple version, we allow everything,
 /// for production code the scope can be narrowed
-pub fn add_cors_middleware<T: DatabaseServiceTrait + Clone + 'static>(
-    router: Router<AppState<T>>,
-) -> Router<AppState<T>> {
+pub fn add_cors_middleware<T: DatabaseServiceTrait + 'static>(
+    router: Router<Arc<AppState<T>>>,
+) -> Router<Arc<AppState<T>>> {
     router.layer(
         CorsLayer::new()
             .allow_origin(Any)
@@ -31,11 +34,11 @@ pub fn add_cors_middleware<T: DatabaseServiceTrait + Clone + 'static>(
 }
 
 /// Add logging layer to record the requests log
-pub fn add_logging_middleware<T: DatabaseServiceTrait + Clone + 'static>(
-    router: Router<AppState<T>>,
+pub fn add_logging_middleware<T: DatabaseServiceTrait + 'static>(
+    router: Router<Arc<AppState<T>>>,
     include_headers: bool,
     logging_level: tracing::Level,
-) -> Router<AppState<T>> {
+) -> Router<Arc<AppState<T>>> {
     router.layer(
         TraceLayer::new_for_http()
             .make_span_with(DefaultMakeSpan::new().include_headers(include_headers))
@@ -48,10 +51,10 @@ pub fn add_logging_middleware<T: DatabaseServiceTrait + Clone + 'static>(
     )
 }
 
-pub fn add_mongodb_transaction_middleware<T: DatabaseServiceTrait + Clone + 'static>(
-    state: AppState<T>,
-    router: Router<AppState<T>>,
-) -> Router<AppState<T>> {
+pub fn add_mongodb_transaction_middleware<T: DatabaseServiceTrait + 'static>(
+    state: Arc<AppState<T>>,
+    router: Router<Arc<AppState<T>>>,
+) -> Router<Arc<AppState<T>>> {
     router.layer(axum::middleware::from_fn_with_state(
         state,
         mongodb_transaction_middleware,

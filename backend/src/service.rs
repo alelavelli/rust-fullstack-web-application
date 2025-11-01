@@ -1,3 +1,4 @@
-mod database;
+pub mod database;
+mod user;
 
-pub use database::{DatabaseService, DatabaseServiceTrait};
+pub use user::UserService;

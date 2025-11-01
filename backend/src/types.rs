@@ -1,16 +1,10 @@
-use std::sync::Arc;
-
 use axum::{
     extract::{FromRef, FromRequest, FromRequestParts},
     http::request::Parts,
     response::{IntoResponse, Response},
 };
-use tokio::task_local;
 
-use crate::{
-    DatabaseService, DatabaseServiceTrait, EnvironmentServiceTrait, ServiceResult,
-    error::{AppError, ServiceAppError},
-};
+use crate::{EnvironmentServiceTrait, error::AppError, service::database::DatabaseServiceTrait};
 
 /// JSON extractor wrapping `axum::Json`.
 /// This makes it easy to override the rejection and provide our
@@ -38,22 +32,21 @@ where
 ///
 /// However, DatabaseServiceTrait cannot be used with dyn because it contains
 /// generics. Therefore, we must use generic as well.
-#[derive(Clone)]
 pub struct AppState<T>
-//where
-//    T: DatabaseServiceTrait + Clone,
+where
+    T: DatabaseServiceTrait,
 {
-    pub environment_service: Arc<dyn EnvironmentServiceTrait>,
-    pub database_service: Arc<T>,
+    pub environment_service: Box<dyn EnvironmentServiceTrait>,
+    pub database_service: T,
 }
 
 impl<T> AppState<T>
 where
-    T: DatabaseServiceTrait + Clone,
+    T: DatabaseServiceTrait,
 {
     pub fn new(
-        environment_service: Arc<dyn EnvironmentServiceTrait>,
-        database_service: Arc<T>,
+        environment_service: Box<dyn EnvironmentServiceTrait>,
+        database_service: T,
     ) -> AppState<T> {
         AppState {
             environment_service,

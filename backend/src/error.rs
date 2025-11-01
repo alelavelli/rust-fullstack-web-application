@@ -23,7 +23,7 @@ use tracing::error;
 
 use crate::types::AppJson;
 
-pub type AppResult<T> = Result<T, AppError>;
+pub type AppResult<T> = Result<AppJson<T>, AppError>;
 pub type ServiceResult<T> = Result<T, ServiceAppError>;
 pub type AuthResult<T> = Result<T, AuthError>;
 pub type DatabaseResult<T> = Result<T, DatabaseError>;
@@ -103,6 +103,9 @@ impl IntoResponse for AppError {
 /// transalted into InternalServerError
 #[derive(Error, Debug)]
 pub enum ServiceAppError {
+    /// Equivalent to 500
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
     /// Equivalent to 401
     #[error("Authorization error: {0}")]
     AuthorizationError(#[from] AuthError),

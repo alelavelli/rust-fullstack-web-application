@@ -10,15 +10,15 @@ use axum::{
 use tokio::sync::RwLock;
 use tracing::debug;
 
-use crate::{AppState, DatabaseServiceTrait};
+use crate::{AppState, service::database::DatabaseServiceTrait};
 
 /// Creates a mongodb transaction if the request is not a GET
 /// and put it in the request extensions.
 ///
 /// If the request is success then the transaction is committed
 /// otherwise it is aborted
-pub async fn mongodb_transaction_middleware<T: DatabaseServiceTrait + Clone + 'static>(
-    State(app_state): State<AppState<T>>,
+pub async fn mongodb_transaction_middleware<T: DatabaseServiceTrait>(
+    State(app_state): State<Arc<AppState<T>>>,
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, axum::http::StatusCode>
@@ -29,7 +29,7 @@ where
         method,
         Method::POST | Method::PATCH | Method::DELETE | Method::PUT
     ) {
-        let db_service = app_state.database_service;
+        let db_service = &app_state.database_service;
         let transaction = Arc::new(RwLock::new(
             db_service
                 .new_transaction()
