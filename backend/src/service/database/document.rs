@@ -1,7 +1,15 @@
 use bson::oid::ObjectId;
 use serde::{Serialize, de::DeserializeOwned};
+
+/// Extension of DatabaseDocumentTrait useful to avoid adding all the additional
+/// traits all over the code base
+pub trait DecoratedDatabaseDocumentTrait:
+    DatabaseDocumentTrait + Sized + Send + Sync + Serialize + DeserializeOwned
+{
+}
+
 /// Trait that defines the behavior for each collection in database
-pub trait DatabaseDocumentTrait: Sized + Send + Sync + Serialize + DeserializeOwned {
+pub trait DatabaseDocumentTrait: Sized {
     fn get_id(&self) -> &ObjectId;
     fn collection_name() -> &'static str;
 }
@@ -52,6 +60,7 @@ macro_rules! database_document {
                     }
                 )*
             }
+
         }
 
         // implementation of database document trait
@@ -64,6 +73,7 @@ macro_rules! database_document {
                 &self.id
             }
         }
+        impl crate::service::database::document::DecoratedDatabaseDocumentTrait for $struct_name {}
 
         // creation of builder
         ::paste::paste! {
@@ -97,7 +107,10 @@ macro_rules! database_document {
 
                 /// Build the database document by creating it on the database via
                 /// the database service
-                pub async fn build(self, transaction: Option<&mut crate::service::database::DatabaseTransaction>) -> crate::error::DatabaseResult<$struct_name> {
+                pub async fn build(
+                    self,
+                    transaction: Option<tokio::sync::RwLock<T::Transaction>>,
+                ) -> crate::error::DatabaseResult<$struct_name> {
                     let document = mongodb::bson::doc! {
                         $(
                             stringify!($field_name): self.$field_name.clone()
@@ -107,7 +120,10 @@ macro_rules! database_document {
                         )*
                     };
 
-                    let doc_id = self.database_service.insert_one::<$struct_name>(document, transaction.map(|inner_transaction| inner_transaction.get_mut_session())).await?;
+                    let doc_id = self.database_service.insert_one::<$struct_name>(
+                        document,
+                        transaction
+                    ).await?;
                     Ok($struct_name {
                         id: doc_id,
                         $(

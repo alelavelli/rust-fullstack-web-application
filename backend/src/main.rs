@@ -6,7 +6,7 @@ use axum::{
 };
 use backend::{
     AppState, EnvironmentService, EnvironmentServiceTrait, FrontendMode, middleware, router,
-    service::database::{DatabaseService, DatabaseServiceTrait},
+    service::database::{DatabaseServiceTrait, MongoDBDatabaseService},
 };
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
@@ -23,7 +23,7 @@ use tracing::info;
 #[tokio::main]
 async fn main() {
     let environment_service = EnvironmentService::default();
-    let database_service = DatabaseService::new(
+    let database_service = MongoDBDatabaseService::new(
         environment_service.get_database_db_name().into(),
         environment_service.get_database_connection_string().into(),
     );
@@ -51,7 +51,9 @@ async fn main() {
 /// via fallback service.
 ///
 /// When frontend mode is external then the root returns standard 200 OK
-fn build_app<T: DatabaseServiceTrait + 'static>(state: Arc<AppState<T>>) -> Router {
+fn build_app<T: DatabaseServiceTrait + Send + Sync + Clone + 'static>(
+    state: Arc<AppState<T>>,
+) -> Router {
     let mut app =
         if let FrontendMode::Integrated(path) = state.environment_service.get_frontend_mode() {
             tracing::info!("working with frontend mode `integrated` with path {path}");

@@ -22,7 +22,7 @@ use crate::{
 ///
 /// In this simple version, we allow everything,
 /// for production code the scope can be narrowed
-pub fn add_cors_middleware<T: DatabaseServiceTrait + 'static>(
+pub fn add_cors_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
     router: Router<Arc<AppState<T>>>,
 ) -> Router<Arc<AppState<T>>> {
     router.layer(
@@ -34,7 +34,7 @@ pub fn add_cors_middleware<T: DatabaseServiceTrait + 'static>(
 }
 
 /// Add logging layer to record the requests log
-pub fn add_logging_middleware<T: DatabaseServiceTrait + 'static>(
+pub fn add_logging_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
     router: Router<Arc<AppState<T>>>,
     include_headers: bool,
     logging_level: tracing::Level,
@@ -51,7 +51,7 @@ pub fn add_logging_middleware<T: DatabaseServiceTrait + 'static>(
     )
 }
 
-pub fn add_mongodb_transaction_middleware<T: DatabaseServiceTrait + 'static>(
+pub fn add_mongodb_transaction_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
     state: Arc<AppState<T>>,
     router: Router<Arc<AppState<T>>>,
 ) -> Router<Arc<AppState<T>>> {

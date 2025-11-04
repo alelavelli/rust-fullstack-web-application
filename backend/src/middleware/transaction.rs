@@ -10,6 +10,7 @@ use axum::{
 use tokio::sync::RwLock;
 use tracing::debug;
 
+use crate::service::database::transaction::DatabaseTransactionTrait;
 use crate::{AppState, service::database::DatabaseServiceTrait};
 
 /// Creates a mongodb transaction if the request is not a GET
@@ -17,7 +18,7 @@ use crate::{AppState, service::database::DatabaseServiceTrait};
 ///
 /// If the request is success then the transaction is committed
 /// otherwise it is aborted
-pub async fn mongodb_transaction_middleware<T: DatabaseServiceTrait>(
+pub async fn mongodb_transaction_middleware<T: DatabaseServiceTrait + Send + Sync>(
     State(app_state): State<Arc<AppState<T>>>,
     mut request: Request<Body>,
     next: Next,
@@ -37,7 +38,7 @@ where
                 .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?,
         ));
 
-        request.extensions_mut().insert(Arc::clone(&transaction));
+        request.extensions_mut().insert(transaction.clone());
 
         let response = next.run(request).await;
         let mut guard = transaction.write().await;

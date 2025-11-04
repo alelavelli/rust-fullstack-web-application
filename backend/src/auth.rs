@@ -32,7 +32,7 @@ pub trait AuthInfo: Clone {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JWTAuthClaim<T>
 where
-    T: DatabaseServiceTrait,
+    T: DatabaseServiceTrait + Clone,
 {
     pub expiration: u32,
     pub user_id: ObjectId,
@@ -40,7 +40,7 @@ where
     phantom: PhantomData<T>,
 }
 
-impl<T: DatabaseServiceTrait> JWTAuthClaim<T> {
+impl<T: DatabaseServiceTrait + Clone> JWTAuthClaim<T> {
     pub fn new(expiration: u32, user_id: ObjectId, username: String) -> Self {
         Self {
             expiration,
@@ -62,7 +62,7 @@ impl<T: DatabaseServiceTrait> JWTAuthClaim<T> {
     }
 }
 
-impl<S, T: DatabaseServiceTrait> FromRequestParts<S> for JWTAuthClaim<T>
+impl<S, T: DatabaseServiceTrait + Clone> FromRequestParts<S> for JWTAuthClaim<T>
 where
     AppState<T>: FromRef<S>,
     S: Send + Sync,
@@ -95,7 +95,7 @@ where
 
 impl<T> AuthInfo for JWTAuthClaim<T>
 where
-    T: DatabaseServiceTrait,
+    T: DatabaseServiceTrait + Clone,
 {
     fn user_id(&self) -> &ObjectId {
         &self.user_id

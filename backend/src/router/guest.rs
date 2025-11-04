@@ -9,7 +9,7 @@ use crate::{
     service::database::DatabaseServiceTrait,
 };
 
-pub fn add_guest_router<T: DatabaseServiceTrait + 'static>(
+pub fn add_guest_router<T: DatabaseServiceTrait + Send + Sync + Clone + 'static>(
     base_path: &str,
     base_router: Router<Arc<AppState<T>>>,
 ) -> Router<Arc<AppState<T>>> {
@@ -19,7 +19,7 @@ pub fn add_guest_router<T: DatabaseServiceTrait + 'static>(
 
 /// Receives username and password, validates the user and
 /// generate JWT for the session
-async fn login<T: DatabaseServiceTrait>(
+async fn login<T: DatabaseServiceTrait + Send + Sync + Clone>(
     State(state): State<Arc<AppState<T>>>,
     Json(payload): Json<guest_request::JWTAuthPayload>,
 ) -> AppResult<guest_response::JWTAuthResponse> {

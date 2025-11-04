@@ -18,7 +18,7 @@ pub struct GuestFacade<T: DatabaseServiceTrait> {
     state: Arc<AppState<T>>,
 }
 
-impl<T: DatabaseServiceTrait> GuestFacade<T> {
+impl<T: DatabaseServiceTrait + Send + Sync + Clone> GuestFacade<T> {
     pub fn new(state: Arc<AppState<T>>) -> Self {
         Self { state }
     }

@@ -5,7 +5,7 @@ use bson::oid::ObjectId;
 use crate::{
     DatabaseResult,
     error::DatabaseError,
-    service::database::{DatabaseServiceTrait, document::DatabaseDocumentTrait},
+    service::database::{DatabaseServiceTrait, document::DecoratedDatabaseDocumentTrait},
 };
 use mongodb::bson::doc;
 
@@ -13,12 +13,12 @@ use mongodb::bson::doc;
 /// accessed reading it repeatedly without doing an additional query
 /// to the database
 #[derive(Clone)]
-pub enum SmartDocumentReference<T: DatabaseDocumentTrait> {
+pub enum SmartDocumentReference<T: DecoratedDatabaseDocumentTrait> {
     Id(ObjectId),
     Document(T),
 }
 
-impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
+impl<T: DecoratedDatabaseDocumentTrait> SmartDocumentReference<T> {
     /// Returns the document id without query the database
     pub fn as_ref_id(&self) -> &ObjectId {
         match self {
@@ -93,19 +93,19 @@ impl<T: DatabaseDocumentTrait> SmartDocumentReference<T> {
     }
 }
 
-impl<T: DatabaseDocumentTrait> From<ObjectId> for SmartDocumentReference<T> {
+impl<T: DecoratedDatabaseDocumentTrait> From<ObjectId> for SmartDocumentReference<T> {
     fn from(value: ObjectId) -> Self {
         Self::Id(value)
     }
 }
 
-impl<T: DatabaseDocumentTrait> From<&ObjectId> for SmartDocumentReference<T> {
+impl<T: DecoratedDatabaseDocumentTrait> From<&ObjectId> for SmartDocumentReference<T> {
     fn from(value: &ObjectId) -> Self {
         Self::Id(*value)
     }
 }
 
-impl<T: DatabaseDocumentTrait> From<T> for SmartDocumentReference<T> {
+impl<T: DecoratedDatabaseDocumentTrait> From<T> for SmartDocumentReference<T> {
     fn from(value: T) -> Self {
         Self::Document(value)
     }

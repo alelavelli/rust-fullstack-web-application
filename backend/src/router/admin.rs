@@ -4,7 +4,7 @@ use axum::Router;
 
 use crate::{AppState, service::database::DatabaseServiceTrait};
 
-pub fn add_admin_router<T: DatabaseServiceTrait + 'static>(
+pub fn add_admin_router<T: DatabaseServiceTrait + Send + Sync + 'static>(
     base_path: &str,
     base_router: Router<Arc<AppState<T>>>,
 ) -> Router<Arc<AppState<T>>> {

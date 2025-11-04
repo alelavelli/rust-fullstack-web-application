@@ -1,15 +1,20 @@
-use crate::{DatabaseResult, service::database::document::DatabaseDocumentTrait};
+use crate::{
+    DatabaseResult,
+    service::database::{
+        document::DecoratedDatabaseDocumentTrait, transaction::DatabaseTransactionTrait,
+    },
+};
 
 pub mod document;
-mod service;
+mod memory_service;
+mod mongodb_service;
 mod smart_document;
-mod transaction;
+pub mod transaction;
 
 use bson::{Document, oid::ObjectId};
-use mongodb::ClientSession;
+pub use mongodb_service::MongoDBDatabaseService;
 use serde::{Serialize, de::DeserializeOwned};
-pub use service::DatabaseService;
-pub use transaction::DatabaseTransaction;
+use tokio::sync::RwLock;
 
 /// Trait to define the database service behavior
 ///
@@ -18,13 +23,15 @@ pub use transaction::DatabaseTransaction;
 /// database operations.
 ///
 /// Any database operation method requires generic T which implements
-/// DatabaseDocumentTrait that is used to get collection name and return
+/// DecoratedDatabaseDocumentTrait that is used to get collection name and return
 /// the specific document struct.
 ///
 /// The return error type is DatabaseError which contains all the possible
 /// error outcomes. It does not use ServiceAppError because it is a second
 /// level service that is used by other services.
-pub trait DatabaseServiceTrait: Send + Sync + Default + Clone {
+pub trait DatabaseServiceTrait: Default {
+    type Transaction: DatabaseTransactionTrait + Send + Sync + 'static;
+
     fn connect(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
 
     fn shutdown(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>>;
@@ -33,39 +40,39 @@ pub trait DatabaseServiceTrait: Send + Sync + Default + Clone {
 
     fn new_transaction(
         &self,
-    ) -> impl std::future::Future<Output = DatabaseResult<DatabaseTransaction>> + Send;
+    ) -> impl std::future::Future<Output = DatabaseResult<Self::Transaction>> + Send;
 
     /// Insert the mongodb document in the collection specified by T
     /// and return the id of the inserted document
     fn insert_one<T>(
         &self,
         document: Document,
-        transaction_session: Option<&mut ClientSession>,
+        transaction: Option<RwLock<Self::Transaction>>,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn insert_many<T>(
         &self,
         documents: Vec<Document>,
-        transaction_session: Option<&mut ClientSession>,
+        transaction: Option<RwLock<Self::Transaction>>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn find_one<T>(
         &self,
         query: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn find_many<T>(
         &self,
         query: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn find_one_projection<T, P>(
         &self,
@@ -73,7 +80,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default + Clone {
         projection: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>> + Send
     where
-        T: DatabaseDocumentTrait,
+        T: DecoratedDatabaseDocumentTrait,
         P: Send + Sync + Serialize + DeserializeOwned;
 
     fn find_many_projection<T, P>(
@@ -82,7 +89,7 @@ pub trait DatabaseServiceTrait: Send + Sync + Default + Clone {
         projection: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>> + Send
     where
-        T: DatabaseDocumentTrait,
+        T: DecoratedDatabaseDocumentTrait,
         P: Send + Sync + Serialize + DeserializeOwned;
 
     fn count_documents<T>(
@@ -90,47 +97,46 @@ pub trait DatabaseServiceTrait: Send + Sync + Default + Clone {
         query: Document,
     ) -> impl std::future::Future<Output = DatabaseResult<u64>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn update_one<T>(
         &self,
         query: Document,
         update: Document,
-        transaction_session: Option<&mut ClientSession>,
+        transaction: Option<RwLock<Self::Transaction>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn update_many<T>(
         &self,
         query: Document,
         update: Document,
-        transaction_session: Option<&mut ClientSession>,
+        transaction: Option<RwLock<Self::Transaction>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn delete_one<T>(
         &self,
         query: Document,
-        transaction_session: Option<&mut ClientSession>,
+        transaction: Option<RwLock<Self::Transaction>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn delete_many<T>(
         &self,
         query: Document,
-        transaction_session: Option<&mut ClientSession>,
+        transaction: Option<RwLock<Self::Transaction>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 
     fn aggreagte<T>(
         &self,
-
         pipeline: Vec<Document>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<Document>>> + Send
     where
-        T: DatabaseDocumentTrait;
+        T: DecoratedDatabaseDocumentTrait;
 }
