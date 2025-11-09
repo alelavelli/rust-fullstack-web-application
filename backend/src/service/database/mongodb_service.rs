@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bson::{Document, oid::ObjectId};
 use futures::TryStreamExt;
 use mongodb::{
@@ -114,7 +116,7 @@ impl DatabaseServiceTrait for MongoDBDatabaseService {
     fn insert_one<T>(
         &self,
         document: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -143,7 +145,7 @@ impl DatabaseServiceTrait for MongoDBDatabaseService {
     fn insert_many<T>(
         &self,
         documents: Vec<Document>,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -258,7 +260,7 @@ impl DatabaseServiceTrait for MongoDBDatabaseService {
         &self,
         query: Document,
         update: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -283,7 +285,7 @@ impl DatabaseServiceTrait for MongoDBDatabaseService {
         &self,
         query: Document,
         update: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -307,7 +309,7 @@ impl DatabaseServiceTrait for MongoDBDatabaseService {
     fn delete_one<T>(
         &self,
         query: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -331,7 +333,7 @@ impl DatabaseServiceTrait for MongoDBDatabaseService {
     fn delete_many<T>(
         &self,
         query: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,

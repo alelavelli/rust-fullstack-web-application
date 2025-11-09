@@ -18,8 +18,8 @@ use crate::{AppState, service::database::DatabaseServiceTrait};
 ///
 /// If the request is success then the transaction is committed
 /// otherwise it is aborted
-pub async fn mongodb_transaction_middleware<T: DatabaseServiceTrait + Send + Sync>(
-    State(app_state): State<Arc<AppState<T>>>,
+pub async fn mongodb_transaction_middleware(
+    State(app_state): State<Arc<AppState>>,
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, axum::http::StatusCode>

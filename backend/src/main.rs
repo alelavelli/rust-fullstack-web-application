@@ -6,7 +6,7 @@ use axum::{
 };
 use backend::{
     AppState, EnvironmentService, EnvironmentServiceTrait, FrontendMode, middleware, router,
-    service::database::{DatabaseServiceTrait, MongoDBDatabaseService},
+    service::database::MongoDBDatabaseService,
 };
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
@@ -30,7 +30,7 @@ async fn main() {
 
     let app_state = Arc::new(AppState::new(
         Box::new(environment_service),
-        database_service,
+        Arc::new(database_service),
     ));
 
     // initialize tracing logging with level defined by the environment service
@@ -51,9 +51,7 @@ async fn main() {
 /// via fallback service.
 ///
 /// When frontend mode is external then the root returns standard 200 OK
-fn build_app<T: DatabaseServiceTrait + Send + Sync + Clone + 'static>(
-    state: Arc<AppState<T>>,
-) -> Router {
+fn build_app(state: Arc<AppState>) -> Router {
     let mut app =
         if let FrontendMode::Integrated(path) = state.environment_service.get_frontend_mode() {
             tracing::info!("working with frontend mode `integrated` with path {path}");

@@ -8,4 +8,5 @@ database_document!(
     last_name: String,
     username: String,
     password_hash: String,
+    admin: bool,
 );

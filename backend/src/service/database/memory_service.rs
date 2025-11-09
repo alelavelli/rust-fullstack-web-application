@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use bson::oid::ObjectId;
 use bson::{Bson, Document, from_document};
@@ -115,7 +116,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
     fn insert_one<T>(
         &self,
         document: bson::Document,
-        _transaction: Option<RwLock<Self::Transaction>>,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -140,7 +141,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
     fn insert_many<T>(
         &self,
         documents: Vec<bson::Document>,
-        _transaction: Option<RwLock<Self::Transaction>>,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -278,7 +279,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
         &self,
         query: bson::Document,
         update: bson::Document,
-        _transaction: Option<RwLock<Self::Transaction>>,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -313,7 +314,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
         &self,
         query: bson::Document,
         update: bson::Document,
-        _transaction: Option<RwLock<Self::Transaction>>,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -346,7 +347,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
     fn delete_one<T>(
         &self,
         query: bson::Document,
-        _transaction: Option<RwLock<Self::Transaction>>,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -368,7 +369,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
     fn delete_many<T>(
         &self,
         query: bson::Document,
-        _transaction: Option<RwLock<Self::Transaction>>,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,
@@ -384,7 +385,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
 
     fn aggreagte<T>(
         &self,
-        pipeline: Vec<bson::Document>,
+        _pipeline: Vec<bson::Document>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<bson::Document>>> + Send
     where
         T: DecoratedDatabaseDocumentTrait,

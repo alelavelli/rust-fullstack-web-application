@@ -24,6 +24,7 @@ use tracing::error;
 use crate::types::AppJson;
 
 pub type AppResult<T> = Result<AppJson<T>, AppError>;
+pub type FacadeResult<T> = Result<T, AppError>;
 pub type ServiceResult<T> = Result<T, ServiceAppError>;
 pub type AuthResult<T> = Result<T, AuthError>;
 pub type DatabaseResult<T> = Result<T, DatabaseError>;

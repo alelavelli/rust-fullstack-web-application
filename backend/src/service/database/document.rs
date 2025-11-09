@@ -109,7 +109,7 @@ macro_rules! database_document {
                 /// the database service
                 pub async fn build(
                     self,
-                    transaction: Option<tokio::sync::RwLock<T::Transaction>>,
+                    transaction: Option<std::sync::Arc<tokio::sync::RwLock<T::Transaction>>>,
                 ) -> crate::error::DatabaseResult<$struct_name> {
                     let document = mongodb::bson::doc! {
                         $(

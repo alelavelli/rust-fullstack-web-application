@@ -1,4 +1,3 @@
+pub mod access_control;
 pub mod database;
-mod user;
-
-pub use user::UserService;
+pub mod user;

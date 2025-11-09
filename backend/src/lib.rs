@@ -9,6 +9,7 @@ mod model;
 pub mod router;
 pub mod service;
 mod types;
+pub mod utils;
 
 pub use enums::FrontendMode;
 pub use environment::{EnvironmentService, EnvironmentServiceTrait};

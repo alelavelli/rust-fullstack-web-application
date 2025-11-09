@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use axum::Router;
 
-use crate::{AppState, service::database::DatabaseServiceTrait};
+use crate::AppState;
 
-pub fn add_user_router<T: DatabaseServiceTrait + Send + Sync + Clone + 'static>(
+pub fn add_user_router(
     base_path: &str,
-    base_router: Router<Arc<AppState<T>>>,
-) -> Router<Arc<AppState<T>>> {
+    base_router: Router<Arc<AppState>>,
+) -> Router<Arc<AppState>> {
     let router = Router::new();
     base_router.nest(base_path, router)
 }

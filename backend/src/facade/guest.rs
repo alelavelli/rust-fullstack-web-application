@@ -7,19 +7,16 @@ use crate::{
     auth::JWTAuthClaim,
     dtos::guest_response::{self, JWTAuthResponse},
     error::{AppError, ServiceAppError},
-    service::{
-        UserService,
-        database::{DatabaseServiceTrait, document::DatabaseDocumentTrait},
-    },
+    service::{database::document::DatabaseDocumentTrait, user::UserService},
     types::AppJson,
 };
 
-pub struct GuestFacade<T: DatabaseServiceTrait> {
-    state: Arc<AppState<T>>,
+pub struct GuestFacade {
+    state: Arc<AppState>,
 }
 
-impl<T: DatabaseServiceTrait + Send + Sync + Clone> GuestFacade<T> {
-    pub fn new(state: Arc<AppState<T>>) -> Self {
+impl GuestFacade {
+    pub fn new(state: Arc<AppState>) -> Self {
         Self { state }
     }
 
@@ -28,7 +25,7 @@ impl<T: DatabaseServiceTrait + Send + Sync + Clone> GuestFacade<T> {
         username: &str,
         password: &str,
     ) -> AppResult<guest_response::JWTAuthResponse> {
-        let user = UserService::login(&self.state.database_service, username, password)
+        let user = UserService::login(self.state.database_service.clone(), username, password)
             .await
             .map_err(|err| match err {
                 ServiceAppError::AuthorizationError(auth_error) => {
@@ -45,7 +42,7 @@ impl<T: DatabaseServiceTrait + Send + Sync + Clone> GuestFacade<T> {
             .environment_service
             .get_authentication_jwt_expiration();
         let now = chrono::offset::Local::now().timestamp();
-        let claims: JWTAuthClaim<T> = JWTAuthClaim::new(
+        let claims: JWTAuthClaim = JWTAuthClaim::new(
             now as u32 + exp as u32,
             *user.get_id(),
             user.username().clone(),

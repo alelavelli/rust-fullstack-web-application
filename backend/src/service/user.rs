@@ -1,15 +1,38 @@
+use std::sync::Arc;
+
 use bson::doc;
 
 use crate::{
     ServiceResult,
     error::{AuthError, ServiceAppError},
     model::User,
-    service::database::DatabaseServiceTrait,
+    service::database::{DatabaseServiceTrait, smart_document::SmartDocumentReference},
 };
 
-pub struct UserService {}
+pub struct UserService<T>
+where
+    T: DatabaseServiceTrait,
+{
+    user: SmartDocumentReference<User>,
+    database_service: Arc<T>,
+}
 
-impl UserService {
+impl<T: DatabaseServiceTrait> UserService<T> {
+    pub fn new(user: SmartDocumentReference<User>, database_service: Arc<T>) -> Self {
+        Self {
+            user,
+            database_service,
+        }
+    }
+
+    /// Load the user from the database updating smart refence document
+    pub async fn get(&mut self) -> ServiceResult<&User> {
+        Ok(self
+            .user
+            .as_document_ref(self.database_service.clone())
+            .await?)
+    }
+
     /// Retrieve from the database the document with the given username and
     /// verify the password hash
     ///
@@ -19,8 +42,8 @@ impl UserService {
     /// InternalServerError: when bcrypt fails
     /// DatabaseError: when an operation over database fails
     /// WrongCredentials: when the username does not exist or password is wrong
-    pub async fn login<T: DatabaseServiceTrait>(
-        database_service: &T,
+    pub async fn login(
+        database_service: Arc<T>,
         username: &str,
         password: &str,
     ) -> ServiceResult<User> {

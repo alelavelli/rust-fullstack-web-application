@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{FromRef, FromRequest, FromRequestParts},
     http::request::Parts,
     response::{IntoResponse, Response},
 };
 
-use crate::{EnvironmentServiceTrait, error::AppError, service::database::DatabaseServiceTrait};
+use crate::{EnvironmentServiceTrait, error::AppError, service::database::MongoDBDatabaseService};
 
 /// JSON extractor wrapping `axum::Json`.
 /// This makes it easy to override the rejection and provide our
@@ -32,22 +34,23 @@ where
 ///
 /// However, DatabaseServiceTrait cannot be used with dyn because it contains
 /// generics. Therefore, we must use generic as well.
-pub struct AppState<T>
-where
-    T: DatabaseServiceTrait,
-{
+/// Since introducing generic in the AppState creates a lot (really a lot)
+/// problems in the handlers, JWTAuth and so on because the trait is not dyn,
+/// send or other things, and since, we always use the current database service,
+/// instead of using a generic we use directly the struct.
+///
+/// For testing purposes, we just inject another database service (the in memory)
+/// at Service level. The state is just used a Router level so there is not limitation.
+pub struct AppState {
     pub environment_service: Box<dyn EnvironmentServiceTrait>,
-    pub database_service: T,
+    pub database_service: Arc<MongoDBDatabaseService>,
 }
 
-impl<T> AppState<T>
-where
-    T: DatabaseServiceTrait,
-{
+impl AppState {
     pub fn new(
         environment_service: Box<dyn EnvironmentServiceTrait>,
-        database_service: T,
-    ) -> AppState<T> {
+        database_service: Arc<MongoDBDatabaseService>,
+    ) -> AppState {
         AppState {
             environment_service,
             database_service,
@@ -56,11 +59,10 @@ where
 }
 
 // Implement FromRequestParts trait to use the state in the application routers
-impl<S, T> FromRequestParts<S> for AppState<T>
+impl<S> FromRequestParts<S> for AppState
 where
     Self: FromRef<S>,
     S: Send + Sync,
-    T: DatabaseServiceTrait + Clone,
 {
     type Rejection = AppError;
 

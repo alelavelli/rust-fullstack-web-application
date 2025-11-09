@@ -13,18 +13,13 @@ use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
 
-use crate::{
-    middleware::transaction::mongodb_transaction_middleware,
-    service::database::DatabaseServiceTrait, types::AppState,
-};
+use crate::{middleware::transaction::mongodb_transaction_middleware, types::AppState};
 
 /// CORS Layer for the application
 ///
 /// In this simple version, we allow everything,
 /// for production code the scope can be narrowed
-pub fn add_cors_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
-    router: Router<Arc<AppState<T>>>,
-) -> Router<Arc<AppState<T>>> {
+pub fn add_cors_middleware(router: Router<Arc<AppState>>) -> Router<Arc<AppState>> {
     router.layer(
         CorsLayer::new()
             .allow_origin(Any)
@@ -34,11 +29,11 @@ pub fn add_cors_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
 }
 
 /// Add logging layer to record the requests log
-pub fn add_logging_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
-    router: Router<Arc<AppState<T>>>,
+pub fn add_logging_middleware(
+    router: Router<Arc<AppState>>,
     include_headers: bool,
     logging_level: tracing::Level,
-) -> Router<Arc<AppState<T>>> {
+) -> Router<Arc<AppState>> {
     router.layer(
         TraceLayer::new_for_http()
             .make_span_with(DefaultMakeSpan::new().include_headers(include_headers))
@@ -51,10 +46,10 @@ pub fn add_logging_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
     )
 }
 
-pub fn add_mongodb_transaction_middleware<T: DatabaseServiceTrait + Send + Sync + 'static>(
-    state: Arc<AppState<T>>,
-    router: Router<Arc<AppState<T>>>,
-) -> Router<Arc<AppState<T>>> {
+pub fn add_mongodb_transaction_middleware(
+    state: Arc<AppState>,
+    router: Router<Arc<AppState>>,
+) -> Router<Arc<AppState>> {
     router.layer(axum::middleware::from_fn_with_state(
         state,
         mongodb_transaction_middleware,

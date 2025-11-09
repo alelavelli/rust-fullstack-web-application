@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     DatabaseResult,
     service::database::{
@@ -8,7 +10,7 @@ use crate::{
 pub mod document;
 mod memory_service;
 mod mongodb_service;
-mod smart_document;
+pub mod smart_document;
 pub mod transaction;
 
 use bson::{Document, oid::ObjectId};
@@ -47,7 +49,7 @@ pub trait DatabaseServiceTrait: Default {
     fn insert_one<T>(
         &self,
         document: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
     where
         T: DecoratedDatabaseDocumentTrait;
@@ -55,7 +57,7 @@ pub trait DatabaseServiceTrait: Default {
     fn insert_many<T>(
         &self,
         documents: Vec<Document>,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
     where
         T: DecoratedDatabaseDocumentTrait;
@@ -103,7 +105,7 @@ pub trait DatabaseServiceTrait: Default {
         &self,
         query: Document,
         update: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait;
@@ -112,7 +114,7 @@ pub trait DatabaseServiceTrait: Default {
         &self,
         query: Document,
         update: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait;
@@ -120,7 +122,7 @@ pub trait DatabaseServiceTrait: Default {
     fn delete_one<T>(
         &self,
         query: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait;
@@ -128,7 +130,7 @@ pub trait DatabaseServiceTrait: Default {
     fn delete_many<T>(
         &self,
         query: Document,
-        transaction: Option<RwLock<Self::Transaction>>,
+        transaction: Option<Arc<RwLock<Self::Transaction>>>,
     ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
     where
         T: DecoratedDatabaseDocumentTrait;
