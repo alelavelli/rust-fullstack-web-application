@@ -64,7 +64,7 @@ macro_rules! database_document {
         }
 
         // implementation of database document trait
-        impl crate::service::database::document::DatabaseDocumentTrait for $struct_name {
+        impl $crate::service::database::document::DatabaseDocumentTrait for $struct_name {
             fn collection_name() -> &'static str {
                 $collection_name
             }

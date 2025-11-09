@@ -48,7 +48,7 @@ where
                 "Response status {status}, committing transaction",
                 status = response.status()
             );
-            let _ = guard
+            guard
                 .commit_transaction()
                 .await
                 .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -58,7 +58,7 @@ where
                 status = response.status()
             );
 
-            let _ = guard
+            guard
                 .abort_transaction()
                 .await
                 .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;

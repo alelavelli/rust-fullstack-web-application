@@ -15,6 +15,7 @@ use crate::{DatabaseResult, service::database::document::DecoratedDatabaseDocume
 ///
 /// It is used only for testing purposes without interacting with
 /// an actual database
+#[derive(Default)]
 pub struct MemoryDatabaseService {
     collections: RwLock<HashMap<String, Vec<Document>>>,
 }
@@ -73,24 +74,16 @@ impl MemoryDatabaseService {
         } else {
             let mut projected_document = Document::new();
             for (key, value) in projection.iter() {
-                if matches!(value, Bson::Int32(1) | Bson::Int64(1) | Bson::Boolean(true)) {
-                    if let Some(value_to_project) = document.get(key) {
+                if matches!(value, Bson::Int32(1) | Bson::Int64(1) | Bson::Boolean(true))
+                    && let Some(value_to_project) = document.get(key) {
                         projected_document.insert(key.clone(), value_to_project.clone());
                     }
-                }
             }
             projected_document
         }
     }
 }
 
-impl Default for MemoryDatabaseService {
-    fn default() -> Self {
-        Self {
-            collections: Default::default(),
-        }
-    }
-}
 
 impl DatabaseServiceTrait for MemoryDatabaseService {
     type Transaction = MemoryDatabaseTransaction;
@@ -121,7 +114,7 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
     {
         let object_id = ObjectId::new();
         let mut document = document.clone();
-        document.insert("_id", object_id.clone());
+        document.insert("_id", object_id);
 
         let collection = T::collection_name();
 
@@ -302,13 +295,12 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
 
         if let Some(documents) = guard.get_mut(collection) {
             for document in documents.iter_mut() {
-                if Self::match_document(document, &query) {
-                    if let Some(Bson::Document(set_document)) = update.get("$set") {
+                if Self::match_document(document, &query)
+                    && let Some(Bson::Document(set_document)) = update.get("$set") {
                         for (key, value) in set_document.iter() {
                             document.insert(key.clone(), value.clone());
                         }
                     }
-                }
             }
             Ok(())
         } else {
@@ -325,14 +317,13 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
         T: DecoratedDatabaseDocumentTrait,
     {
         let collection = T::collection_name();
-        if let Some(documents) = self.collections.write().await.get_mut(collection) {
-            if let Some(document_position) = documents
+        if let Some(documents) = self.collections.write().await.get_mut(collection)
+            && let Some(document_position) = documents
                 .iter()
                 .position(|doc| Self::match_document(doc, &query))
             {
                 documents.remove(document_position);
             }
-        }
         Ok(())
     }
 

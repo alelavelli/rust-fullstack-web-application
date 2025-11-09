@@ -87,6 +87,6 @@ where
                 msg: err.to_string(),
                 source_error: ServiceAppError::from(err),
             })?;
-        Ok(result.get_id().clone())
+        Ok(*result.get_id())
     }
 }
