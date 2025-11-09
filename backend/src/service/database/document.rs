@@ -73,13 +73,13 @@ macro_rules! database_document {
                 &self.id
             }
         }
-        impl crate::service::database::document::DecoratedDatabaseDocumentTrait for $struct_name {}
+        impl $crate::service::database::document::DecoratedDatabaseDocumentTrait for $struct_name {}
 
         // creation of builder
         ::paste::paste! {
             #[derive(Default)]
             pub struct [<$struct_name Builder>]<T>
-            where T: crate::service::database::DatabaseServiceTrait {
+            where T: $crate::service::database::DatabaseServiceTrait {
                 database_service: std::sync::Arc<T>,
                 $(
                     $field_name: Option<$field_type>,
@@ -87,7 +87,7 @@ macro_rules! database_document {
             }
 
             // implementation of methods that allow to set fields and build the document
-            impl<T> [<$struct_name Builder>]<T>  where T: crate::service::database::DatabaseServiceTrait{
+            impl<T> [<$struct_name Builder>]<T>  where T: $crate::service::database::DatabaseServiceTrait{
                 pub fn new(database_service: std::sync::Arc<T>) -> Self {
                     Self {
                         database_service,
@@ -110,11 +110,11 @@ macro_rules! database_document {
                 pub async fn build(
                     self,
                     transaction: Option<std::sync::Arc<tokio::sync::RwLock<T::Transaction>>>,
-                ) -> crate::error::DatabaseResult<$struct_name> {
+                ) -> $crate::error::DatabaseResult<$struct_name> {
                     let document = mongodb::bson::doc! {
                         $(
                             stringify!($field_name): self.$field_name.clone()
-                                .ok_or_else(|| crate::error::DatabaseError::DocumentNotValid(
+                                .ok_or_else(|| $crate::error::DatabaseError::DocumentNotValid(
                                     format!("Missing {}", stringify!($field_name))
                                 ))?,
                         )*
