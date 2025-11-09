@@ -85,5 +85,6 @@ fn build_app(state: Arc<AppState>) -> Router {
     );
     app = middleware::add_cors_middleware(app);
 
+    // Attach the state of the application that will be used by its services
     app.with_state(state)
 }

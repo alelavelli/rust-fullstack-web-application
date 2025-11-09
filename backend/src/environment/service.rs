@@ -11,7 +11,15 @@ use crate::{
 };
 
 /// Basic environment service that initialize all the application
-/// environment variables from the system environment variables
+/// environment variables from the system environment variables.
+///
+/// Environment variables can be organized in the following groups:
+///
+/// - LOGGING: used to setup logging
+/// - AUTHENTICATION: used to build authentication tokens for the user
+/// - DATABASE: used to access the database
+/// - STORAGE: used to access object storage service
+/// - FRONTEND: mode of frontend if integrated or external to the application
 ///
 /// Required variables are:
 ///

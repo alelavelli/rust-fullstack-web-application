@@ -27,7 +27,10 @@ pub trait AuthInfo: Clone {
     fn user_id(&self) -> &ObjectId;
 }
 
-/// Struct containing information that will be encoded inside the jwt token
+/// Struct containing information that will be encoded inside the jwt
+///
+/// The implementation of FromRequestParts trait allow to extract the jwt
+/// from the request headers directly on the route definition
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JWTAuthClaim {
     pub expiration: u32,

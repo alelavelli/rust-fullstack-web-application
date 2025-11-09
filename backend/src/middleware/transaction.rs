@@ -14,7 +14,7 @@ use crate::service::database::transaction::DatabaseTransactionTrait;
 use crate::{AppState, service::database::DatabaseServiceTrait};
 
 /// Creates a mongodb transaction if the request is not a GET
-/// and put it in the request extensions.
+/// and put it in the request extensions to be used by routes.
 ///
 /// If the request is success then the transaction is committed
 /// otherwise it is aborted

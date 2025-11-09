@@ -11,14 +11,20 @@ use crate::{
     },
 };
 
-/// Access control struct that validate and verify
-/// user permissions
+/// Access control service is a secondary service used to
+/// verify user permissions.
+///
+/// It contains a `UserService` instance to operate on the user and retrieve
+/// the required information.
 pub struct AccessControl<D: DatabaseServiceTrait> {
     user_service: UserService<D>,
 }
 
 impl<D: DatabaseServiceTrait> AccessControl<D> {
-    /// From the auth_info it retrieve the user id and verify that it exists
+    /// From the auth_info it retrieve the user id and verify that it exists.
+    ///
+    /// If the user does not exist then a `ServiceAppError::AccessControlError`
+    /// is returned.
     pub async fn new<T: AuthInfo>(
         auth_info: T,
         database_service: Arc<D>,

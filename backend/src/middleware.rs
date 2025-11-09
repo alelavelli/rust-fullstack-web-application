@@ -1,3 +1,6 @@
+//! This modules defines functions to add middlewares to the
+//! application router.
+//!
 //! Middlewares are added to the application using
 //! functions that takes a router, add the middleware
 //! as new layer and then returns it
@@ -29,6 +32,9 @@ pub fn add_cors_middleware(router: Router<Arc<AppState>>) -> Router<Arc<AppState
 }
 
 /// Add logging layer to record the requests log
+///
+/// When the argument `include_headers` is `true` then
+/// each span is instrumented with headers as parameters.
 pub fn add_logging_middleware(
     router: Router<Arc<AppState>>,
     include_headers: bool,
@@ -46,6 +52,7 @@ pub fn add_logging_middleware(
     )
 }
 
+/// Add a middleware that creates a database transaction for the request
 pub fn add_mongodb_transaction_middleware(
     state: Arc<AppState>,
     router: Router<Arc<AppState>>,

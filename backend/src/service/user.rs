@@ -9,6 +9,12 @@ use crate::{
     service::database::{DatabaseServiceTrait, smart_document::SmartDocumentReference},
 };
 
+/// UserService struct allows operations at user level.
+///
+/// Each instance is created for a specific user and operations
+/// are done from its point of view.
+///
+/// A copy of `DatabaseService` is used to easly operate on database.
 pub struct UserService<T>
 where
     T: DatabaseServiceTrait,
