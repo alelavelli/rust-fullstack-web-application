@@ -36,13 +36,9 @@ impl DatabaseTransactionTrait for MongoDBDatabaseTransaction {
     }
 
     /// Commit the transaction
-    fn commit_transaction(
-        &mut self,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send {
-        async {
-            self.session.commit_transaction().await?;
-            Ok(())
-        }
+    async fn commit_transaction(&mut self) -> DatabaseResult<()> {
+        self.session.commit_transaction().await?;
+        Ok(())
     }
 }
 
@@ -54,12 +50,18 @@ impl MemoryDatabaseTransaction {
     }
 }
 
+impl Default for MemoryDatabaseTransaction {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DatabaseTransactionTrait for MemoryDatabaseTransaction {
-    fn abort_transaction(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>> {
-        async { Ok(()) }
+    async fn abort_transaction(&mut self) -> DatabaseResult<()> {
+        Ok(())
     }
 
-    fn commit_transaction(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>> {
-        async { Ok(()) }
+    async fn commit_transaction(&mut self) -> DatabaseResult<()> {
+        Ok(())
     }
 }

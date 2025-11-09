@@ -95,301 +95,269 @@ impl Default for MemoryDatabaseService {
 impl DatabaseServiceTrait for MemoryDatabaseService {
     type Transaction = MemoryDatabaseTransaction;
 
-    fn connect(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>> {
-        async { Ok(()) }
+    async fn connect(&mut self) -> DatabaseResult<()> {
+        Ok(())
     }
 
-    fn shutdown(&mut self) -> impl std::future::Future<Output = DatabaseResult<()>> {
-        async { Ok(()) }
+    async fn shutdown(&mut self) -> DatabaseResult<()> {
+        Ok(())
     }
 
     fn get_db_name(&self) -> &str {
         "database"
     }
 
-    fn new_transaction(
-        &self,
-    ) -> impl std::future::Future<Output = DatabaseResult<Self::Transaction>> + Send {
-        async { Ok(MemoryDatabaseTransaction::new()) }
+    async fn new_transaction(&self) -> DatabaseResult<Self::Transaction> {
+        Ok(MemoryDatabaseTransaction::new())
     }
 
-    fn insert_one<T>(
+    async fn insert_one<T>(
         &self,
         document: bson::Document,
         _transaction: Option<Arc<RwLock<Self::Transaction>>>,
-    ) -> impl std::future::Future<Output = DatabaseResult<ObjectId>> + Send
+    ) -> DatabaseResult<ObjectId>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
-        async move {
-            let object_id = ObjectId::new();
-            let mut document = document.clone();
-            document.insert("_id", object_id.clone());
+        let object_id = ObjectId::new();
+        let mut document = document.clone();
+        document.insert("_id", object_id.clone());
 
-            let collection = T::collection_name();
+        let collection = T::collection_name();
 
-            self.collections
-                .try_write()
-                .map_err(|err| DatabaseError::TransactionError(err.to_string()))?
-                .entry(collection.into())
-                .or_default()
-                .push(document);
-            Ok(object_id)
-        }
+        self.collections
+            .try_write()
+            .map_err(|err| DatabaseError::TransactionError(err.to_string()))?
+            .entry(collection.into())
+            .or_default()
+            .push(document);
+        Ok(object_id)
     }
 
-    fn insert_many<T>(
+    async fn insert_many<T>(
         &self,
         documents: Vec<bson::Document>,
         _transaction: Option<Arc<RwLock<Self::Transaction>>>,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<ObjectId>>> + Send
+    ) -> DatabaseResult<Vec<ObjectId>>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
         let mut inserted_ids = vec![];
-        async move {
-            for document in documents {
-                inserted_ids.push(self.insert_one::<T>(document, None).await?);
-            }
-            Ok(inserted_ids)
+
+        for document in documents {
+            inserted_ids.push(self.insert_one::<T>(document, None).await?);
         }
+        Ok(inserted_ids)
     }
 
-    fn find_one<T>(
-        &self,
-        query: bson::Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<T>>> + Send
+    async fn find_one<T>(&self, query: bson::Document) -> DatabaseResult<Option<T>>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
-        async move {
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.read().await.get(collection) {
-                for document in documents.iter() {
-                    if Self::match_document(document, &query) {
-                        return from_document(document.clone())
-                            .map(Some)
-                            .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()));
-                    }
-                }
-                Ok(None)
-            } else {
-                Ok(None)
-            }
-        }
-    }
-
-    fn find_many<T>(
-        &self,
-        query: bson::Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<T>>> + Send
-    where
-        T: DecoratedDatabaseDocumentTrait,
-    {
-        async move {
-            let mut documents_to_return = vec![];
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.read().await.get(collection) {
-                for document in documents.iter() {
-                    if Self::match_document(document, &query) {
-                        documents_to_return.push(
-                            from_document(document.clone())
-                                .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()))?,
-                        );
-                    }
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.read().await.get(collection) {
+            for document in documents.iter() {
+                if Self::match_document(document, &query) {
+                    return from_document(document.clone())
+                        .map(Some)
+                        .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()));
                 }
             }
-            Ok(documents_to_return)
-        }
-    }
-
-    fn find_one_projection<T, P>(
-        &self,
-        query: bson::Document,
-        projection: bson::Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Option<P>>> + Send
-    where
-        T: DecoratedDatabaseDocumentTrait,
-        P: Send + Sync + serde::Serialize + serde::de::DeserializeOwned,
-    {
-        async move {
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.read().await.get(collection) {
-                for document in documents.iter() {
-                    if Self::match_document(document, &query) {
-                        let projected = Self::apply_projection(document, &projection);
-                        return from_document(projected)
-                            .map(Some)
-                            .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()));
-                    }
-                }
-            }
+            Ok(None)
+        } else {
             Ok(None)
         }
     }
 
-    fn find_many_projection<T, P>(
+    async fn find_many<T>(&self, query: bson::Document) -> DatabaseResult<Vec<T>>
+    where
+        T: DecoratedDatabaseDocumentTrait,
+    {
+        let mut documents_to_return = vec![];
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.read().await.get(collection) {
+            for document in documents.iter() {
+                if Self::match_document(document, &query) {
+                    documents_to_return.push(
+                        from_document(document.clone())
+                            .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()))?,
+                    );
+                }
+            }
+        }
+        Ok(documents_to_return)
+    }
+
+    async fn find_one_projection<T, P>(
         &self,
         query: bson::Document,
         projection: bson::Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<P>>> + Send
+    ) -> DatabaseResult<Option<P>>
     where
         T: DecoratedDatabaseDocumentTrait,
         P: Send + Sync + serde::Serialize + serde::de::DeserializeOwned,
     {
-        async move {
-            let mut documents_to_return = vec![];
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.read().await.get(collection) {
-                for document in documents.iter() {
-                    if Self::match_document(document, &query) {
-                        documents_to_return.push(
-                            from_document(Self::apply_projection(document, &projection))
-                                .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()))?,
-                        );
-                    }
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.read().await.get(collection) {
+            for document in documents.iter() {
+                if Self::match_document(document, &query) {
+                    let projected = Self::apply_projection(document, &projection);
+                    return from_document(projected)
+                        .map(Some)
+                        .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()));
                 }
             }
-            Ok(documents_to_return)
         }
+        Ok(None)
     }
 
-    fn count_documents<T>(
+    async fn find_many_projection<T, P>(
         &self,
         query: bson::Document,
-    ) -> impl std::future::Future<Output = DatabaseResult<u64>> + Send
+        projection: bson::Document,
+    ) -> DatabaseResult<Vec<P>>
+    where
+        T: DecoratedDatabaseDocumentTrait,
+        P: Send + Sync + serde::Serialize + serde::de::DeserializeOwned,
+    {
+        let mut documents_to_return = vec![];
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.read().await.get(collection) {
+            for document in documents.iter() {
+                if Self::match_document(document, &query) {
+                    documents_to_return.push(
+                        from_document(Self::apply_projection(document, &projection))
+                            .map_err(|e| DatabaseError::DocumentNotValid(e.to_string()))?,
+                    );
+                }
+            }
+        }
+        Ok(documents_to_return)
+    }
+
+    async fn count_documents<T>(&self, query: bson::Document) -> DatabaseResult<u64>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
-        async move {
-            let mut count = 0;
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.read().await.get(collection) {
-                for document in documents.iter() {
-                    if Self::match_document(document, &query) {
-                        count += 1;
-                    }
+        let mut count = 0;
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.read().await.get(collection) {
+            for document in documents.iter() {
+                if Self::match_document(document, &query) {
+                    count += 1;
                 }
             }
-            Ok(count)
         }
+        Ok(count)
     }
 
-    fn update_one<T>(
-        &self,
-        query: bson::Document,
-        update: bson::Document,
-        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
-    where
-        T: DecoratedDatabaseDocumentTrait,
-    {
-        async move {
-            let collection = T::collection_name();
-
-            let mut guard = self
-                .collections
-                .try_write()
-                .map_err(|err| DatabaseError::TransactionError(err.to_string()))?;
-
-            if let Some(documents) = guard.get_mut(collection) {
-                for document in documents.iter_mut() {
-                    if Self::match_document(document, &query) {
-                        if let Some(Bson::Document(set_document)) = update.get("$set") {
-                            for (key, value) in set_document.iter() {
-                                document.insert(key.clone(), value.clone());
-                            }
-                        }
-                        break;
-                    }
-                }
-                Ok(())
-            } else {
-                Ok(())
-            }
-        }
-    }
-
-    fn update_many<T>(
+    async fn update_one<T>(
         &self,
         query: bson::Document,
         update: bson::Document,
         _transaction: Option<Arc<RwLock<Self::Transaction>>>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
+    ) -> DatabaseResult<()>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
-        async move {
-            let collection = T::collection_name();
+        let collection = T::collection_name();
 
-            let mut guard = self
-                .collections
-                .try_write()
-                .map_err(|err| DatabaseError::TransactionError(err.to_string()))?;
+        let mut guard = self
+            .collections
+            .try_write()
+            .map_err(|err| DatabaseError::TransactionError(err.to_string()))?;
 
-            if let Some(documents) = guard.get_mut(collection) {
-                for document in documents.iter_mut() {
-                    if Self::match_document(document, &query) {
-                        if let Some(Bson::Document(set_document)) = update.get("$set") {
-                            for (key, value) in set_document.iter() {
-                                document.insert(key.clone(), value.clone());
-                            }
+        if let Some(documents) = guard.get_mut(collection) {
+            for document in documents.iter_mut() {
+                if Self::match_document(document, &query) {
+                    if let Some(Bson::Document(set_document)) = update.get("$set") {
+                        for (key, value) in set_document.iter() {
+                            document.insert(key.clone(), value.clone());
+                        }
+                    }
+                    break;
+                }
+            }
+            Ok(())
+        } else {
+            Ok(())
+        }
+    }
+
+    async fn update_many<T>(
+        &self,
+        query: bson::Document,
+        update: bson::Document,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
+    ) -> DatabaseResult<()>
+    where
+        T: DecoratedDatabaseDocumentTrait,
+    {
+        let collection = T::collection_name();
+
+        let mut guard = self
+            .collections
+            .try_write()
+            .map_err(|err| DatabaseError::TransactionError(err.to_string()))?;
+
+        if let Some(documents) = guard.get_mut(collection) {
+            for document in documents.iter_mut() {
+                if Self::match_document(document, &query) {
+                    if let Some(Bson::Document(set_document)) = update.get("$set") {
+                        for (key, value) in set_document.iter() {
+                            document.insert(key.clone(), value.clone());
                         }
                     }
                 }
-                Ok(())
-            } else {
-                Ok(())
             }
-        }
-    }
-
-    fn delete_one<T>(
-        &self,
-        query: bson::Document,
-        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
-    where
-        T: DecoratedDatabaseDocumentTrait,
-    {
-        async move {
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.write().await.get_mut(collection) {
-                if let Some(document_position) = documents
-                    .iter()
-                    .position(|doc| Self::match_document(doc, &query))
-                {
-                    documents.remove(document_position);
-                }
-            }
+            Ok(())
+        } else {
             Ok(())
         }
     }
 
-    fn delete_many<T>(
+    async fn delete_one<T>(
         &self,
         query: bson::Document,
         _transaction: Option<Arc<RwLock<Self::Transaction>>>,
-    ) -> impl std::future::Future<Output = DatabaseResult<()>> + Send
+    ) -> DatabaseResult<()>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
-        async move {
-            let collection = T::collection_name();
-            if let Some(documents) = self.collections.write().await.get_mut(collection) {
-                documents.retain(|doc| !Self::match_document(doc, &query));
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.write().await.get_mut(collection) {
+            if let Some(document_position) = documents
+                .iter()
+                .position(|doc| Self::match_document(doc, &query))
+            {
+                documents.remove(document_position);
             }
-            Ok(())
         }
+        Ok(())
     }
 
-    fn aggreagte<T>(
+    async fn delete_many<T>(
+        &self,
+        query: bson::Document,
+        _transaction: Option<Arc<RwLock<Self::Transaction>>>,
+    ) -> DatabaseResult<()>
+    where
+        T: DecoratedDatabaseDocumentTrait,
+    {
+        let collection = T::collection_name();
+        if let Some(documents) = self.collections.write().await.get_mut(collection) {
+            documents.retain(|doc| !Self::match_document(doc, &query));
+        }
+        Ok(())
+    }
+
+    async fn aggreagte<T>(
         &self,
         _pipeline: Vec<bson::Document>,
-    ) -> impl std::future::Future<Output = DatabaseResult<Vec<bson::Document>>> + Send
+    ) -> DatabaseResult<Vec<bson::Document>>
     where
         T: DecoratedDatabaseDocumentTrait,
     {
-        async { todo!() }
+        todo!()
     }
 }
