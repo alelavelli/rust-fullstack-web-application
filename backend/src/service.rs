@@ -9,5 +9,6 @@
 //!   like access control and database.
 
 pub mod access_control;
+pub mod blog;
 pub mod database;
 pub mod user;

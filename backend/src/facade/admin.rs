@@ -6,7 +6,10 @@ use crate::{
     model::{User, UserBuilder},
     service::{
         access_control::AccessControl,
-        database::{DatabaseServiceTrait, document::DatabaseDocumentTrait},
+        database::{
+            DatabaseServiceTrait, document::DatabaseDocumentTrait,
+            smart_document::SmartDocumentReference,
+        },
     },
     utils::hash_password,
 };
@@ -27,7 +30,11 @@ where
     /// Verify that the auth info corresponds to a platform admin
     /// and then returns an instance of the facade
     pub async fn new<T: AuthInfo>(auth_info: T, database_service: Arc<D>) -> FacadeResult<Self> {
-        AccessControl::new(auth_info, database_service.clone())
+        let user_reference = Arc::new(RwLock::new(SmartDocumentReference::<User>::Id(
+            *auth_info.user_id(),
+        )));
+
+        AccessControl::new(user_reference.clone(), database_service.clone())
             .await
             .map_err(|err| match err {
                 ServiceAppError::AccessControlError(msg) => AppError::AccessControlError(msg),

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    Extension, Json, Router,
+    Extension, Json, Router, debug_handler,
     extract::State,
     routing::{get, post},
 };
@@ -26,6 +26,7 @@ pub fn add_admin_router(
     base_router.nest(base_path, router)
 }
 
+#[debug_handler]
 async fn get_users(
     State(state): State<Arc<AppState>>,
     jwt_claim: JWTAuthClaim,

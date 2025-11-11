@@ -75,15 +75,15 @@ impl MemoryDatabaseService {
             let mut projected_document = Document::new();
             for (key, value) in projection.iter() {
                 if matches!(value, Bson::Int32(1) | Bson::Int64(1) | Bson::Boolean(true))
-                    && let Some(value_to_project) = document.get(key) {
-                        projected_document.insert(key.clone(), value_to_project.clone());
-                    }
+                    && let Some(value_to_project) = document.get(key)
+                {
+                    projected_document.insert(key.clone(), value_to_project.clone());
+                }
             }
             projected_document
         }
     }
 }
-
 
 impl DatabaseServiceTrait for MemoryDatabaseService {
     type Transaction = MemoryDatabaseTransaction;
@@ -296,11 +296,12 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
         if let Some(documents) = guard.get_mut(collection) {
             for document in documents.iter_mut() {
                 if Self::match_document(document, &query)
-                    && let Some(Bson::Document(set_document)) = update.get("$set") {
-                        for (key, value) in set_document.iter() {
-                            document.insert(key.clone(), value.clone());
-                        }
+                    && let Some(Bson::Document(set_document)) = update.get("$set")
+                {
+                    for (key, value) in set_document.iter() {
+                        document.insert(key.clone(), value.clone());
                     }
+                }
             }
             Ok(())
         } else {
@@ -321,9 +322,9 @@ impl DatabaseServiceTrait for MemoryDatabaseService {
             && let Some(document_position) = documents
                 .iter()
                 .position(|doc| Self::match_document(doc, &query))
-            {
-                documents.remove(document_position);
-            }
+        {
+            documents.remove(document_position);
+        }
         Ok(())
     }
 
