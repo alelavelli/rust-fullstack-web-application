@@ -207,3 +207,31 @@ The provided methods allows to get the id (no database query will be performed f
 The transaction module contains the definition of the transaction trait `DatabaseTransactionTrait` and its implementations for MongoDB and for In Memory: `MongoDBDatabaseTransaction` and `MemoryDatabaseTransaction` respectively.
 
 `MongoDBDatabaseTransaction` implementation is pretty simple: it contains a `mongodb::client::ClientSession` and it is provided to the database service to attach it during database operations.
+
+### Error types
+
+I defined different error types that are used at different levels of the application.
+
+The error module uses the crate `thiserror` to facilitate the definition of the error variants.
+
+#### DatabaseError
+
+`DatabaseError` type is used by the `DatabaseServiceTrait` and contains all the possible outcomes when dealing with it and with the actual database.
+
+#### AuthError
+
+`AuthError` is used by the `JWTAuthClaim` when something goes wrong when dealing with authentication tokens and by the `login` method of `UserService`.
+
+In its implementation there is the method `to_status_message` that translate each enum variant into the specific HTTP response code and message.
+
+#### ServiceAppError
+
+`ServiceAppError` is used by all the services and contains all the possible outcomes.
+
+#### AppError
+
+`AppError` is the error type returned by facades and routers' handlers and implements the trait `IntoReponse` to be automatically translated into HTTP response code and message.
+
+It is separated with `ServiceAppError` because according to the context we can mask some internal errors to `InternalServerError`.
+
+Facades are responsible to explicitly translated `ServiceAppError` returned type into `AppError` to correctly communicate the error to the client.
