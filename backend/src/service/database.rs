@@ -19,7 +19,7 @@ use crate::{
 };
 
 pub mod document;
-mod memory_service;
+pub mod memory_service;
 mod mongodb_service;
 pub mod smart_document;
 pub mod transaction;

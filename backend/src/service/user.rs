@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use bson::doc;
+use tokio::sync::RwLock;
 
 use crate::{
     ServiceResult,
@@ -19,12 +20,12 @@ pub struct UserService<T>
 where
     T: DatabaseServiceTrait,
 {
-    user: SmartDocumentReference<User>,
+    user: Arc<RwLock<SmartDocumentReference<User>>>,
     database_service: Arc<T>,
 }
 
 impl<T: DatabaseServiceTrait> UserService<T> {
-    pub fn new(user: SmartDocumentReference<User>, database_service: Arc<T>) -> Self {
+    pub fn new(user: Arc<RwLock<SmartDocumentReference<User>>>, database_service: Arc<T>) -> Self {
         Self {
             user,
             database_service,
@@ -32,11 +33,14 @@ impl<T: DatabaseServiceTrait> UserService<T> {
     }
 
     /// Load the user from the database updating smart refence document
-    pub async fn get(&mut self) -> ServiceResult<&User> {
+    pub async fn get(&mut self) -> ServiceResult<User> {
         Ok(self
             .user
+            .write()
+            .await
             .as_document_ref(self.database_service.clone())
-            .await?)
+            .await?
+            .clone())
     }
 
     /// Retrieve from the database the document with the given username and
@@ -71,5 +75,81 @@ impl<T: DatabaseServiceTrait> UserService<T> {
                 AuthError::WrongCredentials,
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use tokio::sync::RwLock;
+
+    use crate::{
+        model::{User, UserBuilder},
+        service::{
+            database::{
+                document::DatabaseDocumentTrait, memory_service::MemoryDatabaseService,
+                smart_document::SmartDocumentReference,
+            },
+            user::UserService,
+        },
+        utils::hash_password,
+    };
+
+    async fn create_user(
+        database_service: Arc<MemoryDatabaseService>,
+        username: &str,
+        password: &str,
+    ) -> User {
+        let password_hash = hash_password(password).unwrap();
+
+        UserBuilder::new(database_service.clone())
+            .first_name("Marcel".into())
+            .last_name("Proust".into())
+            .admin(false)
+            .username(username.into())
+            .publisher(false)
+            .password_hash(password_hash)
+            .build(None)
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_login() {
+        let username = "username";
+        let password = "password";
+
+        let database_service = Arc::new(MemoryDatabaseService::default());
+
+        create_user(database_service.clone(), "first_user", "first_user").await;
+        let user = create_user(database_service.clone(), username, password).await;
+
+        let logged_user = UserService::login(database_service.clone(), username, password)
+            .await
+            .unwrap();
+        assert_eq!(logged_user.username(), &username);
+        assert_eq!(logged_user.get_id(), user.get_id());
+    }
+
+    #[tokio::test]
+    async fn test_get() {
+        let username = "username";
+        let password = "password";
+
+        let database_service = Arc::new(MemoryDatabaseService::default());
+
+        create_user(database_service.clone(), "first_user", "first_user").await;
+        let user = create_user(database_service.clone(), username, password).await;
+
+        let mut user_service = UserService::new(
+            Arc::new(RwLock::new(SmartDocumentReference::Document(user.clone()))),
+            database_service.clone(),
+        );
+
+        let read_user = user_service.get().await.unwrap();
+
+        assert_eq!(read_user.username(), &username);
+        assert_eq!(read_user.get_id(), user.get_id());
     }
 }

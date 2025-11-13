@@ -15,7 +15,7 @@ use crate::{DatabaseResult, service::database::document::DecoratedDatabaseDocume
 ///
 /// It is used only for testing purposes without interacting with
 /// an actual database
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct MemoryDatabaseService {
     collections: RwLock<HashMap<String, Vec<Document>>>,
 }
@@ -27,6 +27,10 @@ impl MemoryDatabaseService {
     /// in our document and if the values match as requested
     fn match_document(document: &Document, query: &Document) -> bool {
         // return true only if all the query constraints are validated to true
+        if query.is_empty() {
+            return true;
+        }
+
         let mut match_result = false;
         for (key, value) in query.iter() {
             // value can be a "scalar" or another document

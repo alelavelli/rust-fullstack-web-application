@@ -47,7 +47,9 @@ where
             })?;
 
         let mut user_service = UserService::new(
-            SmartDocumentReference::<User>::from(auth_info.user_id()),
+            Arc::new(RwLock::new(SmartDocumentReference::<User>::from(
+                auth_info.user_id(),
+            ))),
             database_service.clone(),
         );
         let user = user_service.get().await.map_err(|err| match err {
