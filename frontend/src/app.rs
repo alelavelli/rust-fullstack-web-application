@@ -1,4 +1,4 @@
-use frontend::model::BlogPost;
+use crate::model::BlogPost;
 use gloo_net::http::Request;
 use yew::{Callback, Html, Properties, function_component, html, use_effect_with, use_state};
 
@@ -45,7 +45,7 @@ fn posts_list(PostsListsProp { posts, on_click }: &PostsListsProp) -> Html {
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let blog_posts_mock = vec![
+    let _blog_posts_mock = vec![
         BlogPost {
             id: "1".into(),
             title: "First blog".into(),
