@@ -20,7 +20,7 @@ The application is accessibile via Browser and API and provides all functionalit
 
 The backend entry point, `main.rs`, configures basic services and starts the `axum` application to listen for requests from the clients:
 
-1. The `EnvironemntService` and the `MongoDBDatabaseService` objects are created to form the `AppState` that will be shared among the rest of the application.
+1. The `EnvironmentService` and the `MongoDBDatabaseService` objects are created to form the `AppState` that will be shared among the rest of the application.
 2. Logging is setup initializing `tracing_subcriber`.
 3. A `TcpListener` is created to listen on the specified port
 4. The application `Router` is built and then served by the listener
@@ -30,7 +30,7 @@ The backend entry point, `main.rs`, configures basic services and starts the `ax
 The application router is `axum::Router` struct and according to the variable `FrontendMode` serves only backend routes or static frontend resources as well.
 The router is composed of serveral nested routers, one for each application usage line (guest, admin, user, ...).
 
-> Note that the definition of routers in this way is totally arbitrary but I prefer to divide routes like this because it separate user personas facilitating the consequent RBAC.
+> Note that the definition of routers in this way is totally arbitrary but I prefer to divide routes like this because it separates user personas facilitating the consequent RBAC.
 
 Routers are added using utility methods present in `backend::router` by specifying the base url for the rout and the application struct.
 
