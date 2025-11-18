@@ -1,17 +1,77 @@
-html,
-body {
-  height: 100%;
+// Configuration A is to have the footer at the bottom of the page
+// with main that fills the page even if it is short. When the main
+// is longer than the page the footer follows main and will be always
+// at the bottom. The header is always blocked at the top.
+
+// Configuration B is to have the footer and the header always visible
+// and the scrolling is done only for main
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
 }
 
 body {
+  // Configuration A
   display: flex;
   flex-direction: column;
-  margin: 0rem 2rem;
+  min-height: 100vh;
 }
 
-main {
-  color: #013e3f;
-  font-family: sans-serif;
-  text-align: left;
+.main {
+  // Configuration A
+  padding: 6rem 1rem 1rem 1rem;
+  flex: 1;
+
+  // Configuration B
+  //padding: 50px 0 100px 0;
+}
+
+header {
+  // Configuration A
+  min-height: 4rem;
+  // Configuration B
+  //height: 50px;
+
+  position: fixed;
+  width: 100%;
+  border: 1px solid red;
+  top: 0;
+
+
+  background-color: #013e3f;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0rem 2rem;
+}
+
+footer {
+  // Configuration A
+  min-height: 2rem;
+
+  // Configuration B
+  //position: fixed;
+  //height: 100px;
+  //width: 100%;
+  //border: 1px solid blue;
+  //bottom: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: #013e3f;
+  color: white;
+
+
+
+  .footer-body {
+    padding: 0rem 2rem;
+  }
 }

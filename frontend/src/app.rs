@@ -1,6 +1,30 @@
-use crate::model::BlogPost;
+use crate::{
+    component::{footer::Footer, header::Header},
+    model::BlogPost,
+    page::{home::Home, login::Login, not_found::NotFound},
+};
 use gloo_net::http::Request;
 use yew::{Callback, Html, Properties, function_component, html, use_effect_with, use_state};
+use yew_router::{BrowserRouter, Routable, Switch};
+
+#[derive(Routable, Debug, Clone, PartialEq, Eq)]
+pub enum AppRoute {
+    #[at("/login")]
+    Login,
+    #[at("/")]
+    Home,
+    #[not_found]
+    #[at("/not-found")]
+    NotFound,
+}
+
+fn switch(route: AppRoute) -> Html {
+    match route {
+        AppRoute::Home => html! { <Home /> },
+        AppRoute::Login => html! { <Login /> },
+        AppRoute::NotFound => html! { <NotFound /> },
+    }
+}
 
 #[derive(Properties, PartialEq)]
 struct PostDetailProps {
@@ -106,7 +130,15 @@ pub fn app() -> Html {
     });
 
     html! {
-        <main>
+        <BrowserRouter>
+            <Header/>
+            <div class="main">
+                <Switch<AppRoute> render={switch} />
+            </div>
+            <Footer/>
+        </BrowserRouter>
+
+        /* <main>
             <h1>{ "Hello Blog!" }</h1>
             <h2>{ "Your personal blog written totally in Rust ;)" }</h2>
             <div>
@@ -114,6 +146,6 @@ pub fn app() -> Html {
                 <PostsList posts={(*blog_posts).clone()} on_click={on_post_select.clone()}/>
             </div>
             {for details}
-        </main>
+        </main> */
     }
 }
