@@ -132,9 +132,9 @@ pub fn app() -> Html {
     html! {
         <BrowserRouter>
             <Header/>
-            <div class="main">
+            <main>
                 <Switch<AppRoute> render={switch} />
-            </div>
+            </main>
             <Footer/>
         </BrowserRouter>
 
