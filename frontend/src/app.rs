@@ -1,10 +1,16 @@
 use crate::{
     component::{footer::Footer, header::Header},
+    environment::EnvironmentService,
     model::BlogPost,
     page::{home::Home, login::Login, not_found::NotFound},
+    service::api::ApiService,
+    types::AppContext,
 };
 use gloo_net::http::Request;
-use yew::{Callback, Html, Properties, function_component, html, use_effect_with, use_state};
+use yew::{
+    Callback, ContextProvider, Html, Properties, function_component, html, use_effect_with,
+    use_state,
+};
 use yew_router::{BrowserRouter, Routable, Switch};
 
 #[derive(Routable, Debug, Clone, PartialEq, Eq)]
@@ -69,7 +75,7 @@ fn posts_list(PostsListsProp { posts, on_click }: &PostsListsProp) -> Html {
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let _blog_posts_mock = vec![
+    /* let _blog_posts_mock = vec![
         BlogPost {
             id: "1".into(),
             title: "First blog".into(),
@@ -127,14 +133,23 @@ pub fn app() -> Html {
         html! {
             <PostDetail post={post.clone()} />
         }
-    });
+    }); */
+
+    /* According to documentation https://yew.rs/docs/concepts/contexts
+    we create a state handle to contain general context that will be used
+    by the application */
+    let environment_service = EnvironmentService::new();
+    let api_service = ApiService::new(environment_service.get_api_url().into());
+    let app_context = use_state(|| AppContext::new(environment_service, api_service));
 
     html! {
         <BrowserRouter>
             <Header/>
-            <main>
-                <Switch<AppRoute> render={switch} />
-            </main>
+            <ContextProvider<AppContext> context={(*app_context).clone()}>
+                <main>
+                    <Switch<AppRoute> render={switch}/>
+                </main>
+            </ContextProvider<AppContext>>
             <Footer/>
         </BrowserRouter>
 
