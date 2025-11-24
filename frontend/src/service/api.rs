@@ -10,7 +10,7 @@ impl ApiService {
         Self { api_url }
     }
 
-    pub fn login(&self, username: String, password: String) {
+    pub async fn login(&self, username: String, password: String) {
         info!(
             "Login with username: {username} and password: {password}",
             username = username,
