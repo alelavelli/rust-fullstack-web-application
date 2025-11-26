@@ -2,7 +2,7 @@
 //! the EnvironemntService and defines the struct containing application
 //! environment variables.
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct EnvironmentService {
     api_url: String,
 }
@@ -15,6 +15,6 @@ impl EnvironmentService {
     }
 
     pub fn get_api_url(&self) -> String {
-        return self.api_url.clone();
+        self.api_url.clone()
     }
 }

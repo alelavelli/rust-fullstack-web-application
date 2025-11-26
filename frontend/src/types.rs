@@ -1,4 +1,7 @@
-use crate::{environment::EnvironmentService, model::LoggedUserInfo, service::api::ApiService};
+use crate::{
+    environment::EnvironmentService, error::ApiError, model::LoggedUserInfo,
+    service::api::ApiService,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AppContext {
@@ -20,3 +23,10 @@ impl AppContext {
         }
     }
 }
+
+pub struct ApiResponse<T> {
+    pub body: T,
+    pub status: u16,
+}
+
+pub type ApiResult<T> = Result<ApiResponse<T>, ApiError>;

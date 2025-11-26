@@ -1,7 +1,5 @@
 use thiserror::Error;
 
-pub type ApiResult<T> = Result<T, ApiError>;
-
 #[derive(Error, Debug)]
 pub enum ApiError {
     /// Equivalent to 422
@@ -26,7 +24,7 @@ pub enum ApiError {
     #[error("Generic request error: {0}")]
     GenericRequestError(String),
     /// Request error from the gloo library
-    #[error("Request error")]
+    #[error("Request error: {0}")]
     RequestError(#[from] gloo_net::Error),
 }
 

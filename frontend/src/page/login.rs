@@ -1,11 +1,14 @@
-use log::{error, info};
+use log::error;
 use web_sys::HtmlInputElement;
 use yew::{
     Callback, Html, SubmitEvent, UseStateHandle, function_component, html, use_context,
-    use_effect_with, use_node_ref, use_state,
+    use_node_ref, use_state,
 };
 
-use crate::{model::LoginInfo, service::auth::AuthService, types::AppContext};
+use crate::{
+    service::auth::AuthService,
+    types::{ApiResponse, AppContext},
+};
 
 #[function_component(Login)]
 pub fn login_component() -> Html {
@@ -16,96 +19,74 @@ pub fn login_component() -> Html {
     let username_node_ref = use_node_ref();
     let password_node_ref = use_node_ref();
 
+    // we extract the application context because we need the api service to make login request
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
 
-    let login_info = use_state(|| LoginInfo {
-        username: None,
-        password: None,
-    });
-    let login_error = use_state(|| false);
+    // boolean variable to display error message if something when wrong
+    let login_error: UseStateHandle<Option<String>> = use_state(|| None);
+    // this clone is needed to be passed to onsubmit callback
     let login_error_clone = login_error.clone();
-
-    /* use_effect_with(login_info.clone(), move |login_info| {
-        let login_info = login_info.clone();
-        let login_error = login_error_clone.clone();
-        let app_context = app_context.clone();
-        wasm_bindgen_futures::spawn_local(async move {
-            if login_info.username.is_some() && login_info.password.is_some() {
-                let username = login_info.username.as_ref().unwrap().clone();
-                let password = login_info.password.as_ref().unwrap().clone();
-
-                let logged_user_info = app_context.api_service.login(username, password).await;
-
-                if let Ok(logged_user_info) = logged_user_info {
-                    AuthService::new()
-                        .set_token(logged_user_info.token.clone())
-                        .expect("Failed to store token");
-
-                    app_context.set(AppContext {
-                        environment_service: app_context.environment_service.clone(),
-                        api_service: app_context.api_service.clone(),
-                        user_info: Some(logged_user_info),
-                    });
-                    login_error.set(false);
-                } else {
-                    error!("Encountered an error in login request");
-                    login_error.set(true);
-                }
-            }
-        });
-    }); */
 
     let onsubmit = {
         let username_node_ref = username_node_ref.clone();
         let password_node_ref = password_node_ref.clone();
-        let login_info = login_info.clone();
 
         Callback::from(move |e: SubmitEvent| {
+            // the callback gets the values from the input elements
+            // if they are not None then a backend request is done
             e.prevent_default();
 
-            let username = if let Some(username) = username_node_ref.cast::<HtmlInputElement>() {
-                Some(username.value())
-            } else {
-                None
-            };
+            let username = username_node_ref
+                .cast::<HtmlInputElement>()
+                .map(|username| username.value());
+            let password = password_node_ref
+                .cast::<HtmlInputElement>()
+                .map(|password| password.value());
 
-            let password = if let Some(password) = password_node_ref.cast::<HtmlInputElement>() {
-                Some(password.value())
-            } else {
-                None
-            };
-            info!("before set");
-            login_info.set(LoginInfo { username, password });
-            info!("after set");
-            let login_info = login_info.clone();
             let login_error = login_error_clone.clone();
             let app_context = app_context.clone();
-            info!("before spawn");
+
             wasm_bindgen_futures::spawn_local(async move {
-                if login_info.username.is_some() && login_info.password.is_some() {
-                    let username = login_info.username.as_ref().unwrap().clone();
-                    let password = login_info.password.as_ref().unwrap().clone();
+                if let (Some(username), Some(password)) = (username, password) {
+                    if !username.trim().is_empty() && !password.trim().is_empty() {
+                        // make the request, if the type is Ok then set the token and update the app context
+                        // if it is error then update the error boolean variable
+                        let logged_user_info =
+                            app_context.api_service.login(username, password).await;
 
-                    let logged_user_info = app_context.api_service.login(username, password).await;
+                        if let Ok(ApiResponse { body, status }) = logged_user_info {
+                            if status == 200 {
+                                if let Some(body) = body {
+                                    AuthService::new()
+                                        .set_token(body.token.clone())
+                                        .expect("Failed to store token");
 
-                    if let Ok(logged_user_info) = logged_user_info {
-                        AuthService::new()
-                            .set_token(logged_user_info.token.clone())
-                            .expect("Failed to store token");
-
-                        app_context.set(AppContext {
-                            environment_service: app_context.environment_service.clone(),
-                            api_service: app_context.api_service.clone(),
-                            user_info: Some(logged_user_info),
-                        });
-                        login_error.set(false);
-                    } else {
-                        error!("Encountered an error in login request");
-                        login_error.set(true);
+                                    app_context.set(AppContext {
+                                        environment_service: app_context
+                                            .environment_service
+                                            .clone(),
+                                        api_service: app_context.api_service.clone(),
+                                        user_info: Some(body),
+                                    });
+                                    login_error.set(None);
+                                } else {
+                                    // if the body is None then it is an internal error
+                                    login_error
+                                        .set(Some(String::from("Ops, something went wrong.")));
+                                }
+                            } else {
+                                login_error.set(Some(format!("Got error from backend: {status}")));
+                            }
+                        } else {
+                            error!(
+                                "Encountered an error in login request. Error {err}",
+                                err = logged_user_info.err().unwrap()
+                            );
+                            login_error.set(Some("Got error from backend".to_string()));
+                        }
                     }
                 }
             });
-            info!("after spawn");
         })
     };
 
@@ -121,8 +102,8 @@ pub fn login_component() -> Html {
                     <input type="password" placeholder="password" ref={password_node_ref}/>
                 </fieldset>
                 <button type="submit">{"Login"}</button>
-                if *login_error {
-                    <p style="color:red">{"Ops, something went wrong"}</p>
+                if let Some(error_msg) = (*login_error).clone() {
+                    <p style="color:red">{error_msg}</p>
                 }
             </form>
         </div>

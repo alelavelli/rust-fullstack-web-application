@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use web_sys::wasm_bindgen::JsValue;
 
 #[derive(Clone, PartialEq, Deserialize)]
 pub struct BlogPost {
@@ -12,8 +13,8 @@ pub struct BlogPost {
 
 #[derive(Clone, PartialEq, Serialize)]
 pub struct LoginInfo {
-    pub username: Option<String>,
-    pub password: Option<String>,
+    pub username: String,
+    pub password: String,
 }
 
 #[derive(Clone, PartialEq, Deserialize, Debug)]

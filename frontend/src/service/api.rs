@@ -1,7 +1,10 @@
 use gloo_net::http::Request;
-use log::info;
 
-use crate::{error::ApiResult, model::LoggedUserInfo, service::auth::AuthService};
+use crate::{
+    model::{LoggedUserInfo, LoginInfo},
+    service::auth::AuthService,
+    types::{ApiResponse, ApiResult},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApiService {
@@ -15,22 +18,31 @@ impl ApiService {
         Self { api_url, token }
     }
 
-    pub async fn login(&self, username: String, password: String) -> ApiResult<LoggedUserInfo> {
-        info!(
-            "Login with username: {username} and password: {password}",
-            username = username,
-            password = password
-        );
+    pub async fn login(
+        &self,
+        username: String,
+        password: String,
+    ) -> ApiResult<Option<LoggedUserInfo>> {
+        let login_info = LoginInfo { username, password };
 
         let mut url = String::from(&self.api_url);
         url.push_str("/guest/login");
 
         let response = Request::post(&url)
             .header("Content-Type", "application/json")
+            .json(&login_info)?
             .send()
             .await?;
-        info!("Response code is {response}", response = &response.status());
 
-        Ok(response.json::<LoggedUserInfo>().await?)
+        let body = if response.status() == 200 {
+            Some(response.json::<LoggedUserInfo>().await?)
+        } else {
+            None
+        };
+
+        Ok(ApiResponse {
+            body,
+            status: response.status(),
+        })
     }
 }

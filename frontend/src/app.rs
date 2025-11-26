@@ -139,7 +139,7 @@ pub fn app() -> Html {
     we create a state handle to contain general context that will be used
     by the application */
     let environment_service = EnvironmentService::new();
-    let api_service = ApiService::new(environment_service.get_api_url().into());
+    let api_service = ApiService::new(environment_service.get_api_url());
     let app_context = use_state(|| AppContext::new(environment_service, api_service, None));
 
     html! {

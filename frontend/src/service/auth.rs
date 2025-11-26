@@ -1,5 +1,6 @@
 use gloo_storage::{LocalStorage, Storage, errors::StorageError};
 
+#[derive(Default)]
 pub struct AuthService {
     storage_location_name: String,
 }
