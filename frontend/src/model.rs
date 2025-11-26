@@ -15,3 +15,10 @@ pub struct LoginInfo {
     pub username: Option<String>,
     pub password: Option<String>,
 }
+
+#[derive(Clone, PartialEq, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LoggedUserInfo {
+    pub token: String,
+    pub token_type: String,
+}

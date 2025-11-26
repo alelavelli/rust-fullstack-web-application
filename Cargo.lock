@@ -792,8 +792,10 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "gloo-net 0.2.6",
+ "gloo-storage 0.3.0",
  "log",
  "serde",
+ "thiserror 2.0.17",
  "wasm-bindgen-futures",
  "wasm-logger",
  "web-sys",

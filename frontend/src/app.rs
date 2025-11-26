@@ -8,8 +8,8 @@ use crate::{
 };
 use gloo_net::http::Request;
 use yew::{
-    Callback, ContextProvider, Html, Properties, function_component, html, use_effect_with,
-    use_state,
+    Callback, ContextProvider, Html, Properties, UseStateHandle, function_component, html,
+    use_effect_with, use_state,
 };
 use yew_router::{BrowserRouter, Routable, Switch};
 
@@ -140,16 +140,16 @@ pub fn app() -> Html {
     by the application */
     let environment_service = EnvironmentService::new();
     let api_service = ApiService::new(environment_service.get_api_url().into());
-    let app_context = use_state(|| AppContext::new(environment_service, api_service));
+    let app_context = use_state(|| AppContext::new(environment_service, api_service, None));
 
     html! {
         <BrowserRouter>
             <Header/>
-            <ContextProvider<AppContext> context={(*app_context).clone()}>
+            <ContextProvider<UseStateHandle<AppContext>> context={app_context}>
                 <main>
                     <Switch<AppRoute> render={switch}/>
                 </main>
-            </ContextProvider<AppContext>>
+            </ContextProvider<UseStateHandle<AppContext>>>
             <Footer/>
         </BrowserRouter>
 
