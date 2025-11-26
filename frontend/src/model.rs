@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use web_sys::wasm_bindgen::JsValue;
 
 #[derive(Clone, PartialEq, Deserialize)]
 pub struct BlogPost {

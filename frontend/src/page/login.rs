@@ -22,7 +22,7 @@ pub fn login_component() -> Html {
     // we extract the application context because we need the api service to make login request
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
 
-    // boolean variable to display error message if something when wrong
+    // variable to display error message if something when wrong
     let login_error: UseStateHandle<Option<String>> = use_state(|| None);
     // this clone is needed to be passed to onsubmit callback
     let login_error_clone = login_error.clone();
