@@ -6,7 +6,9 @@ use yew::{
 };
 
 use crate::{
-    service::auth::AuthService,
+    enums::HttpStatus,
+    environment::EnvironmentService,
+    service::{api::ApiService, auth::AuthService},
     types::{ApiResponse, AppContext},
 };
 
@@ -19,7 +21,6 @@ pub fn login_component() -> Html {
     let username_node_ref = use_node_ref();
     let password_node_ref = use_node_ref();
 
-    // we extract the application context because we need the api service to make login request
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
 
     // variable to display error message if something when wrong
@@ -49,33 +50,35 @@ pub fn login_component() -> Html {
             wasm_bindgen_futures::spawn_local(async move {
                 if let (Some(username), Some(password)) = (username, password) {
                     if !username.trim().is_empty() && !password.trim().is_empty() {
+                        let environment_service = EnvironmentService::new();
+                        let api_service = ApiService::new(
+                            environment_service.get_api_url(),
+                            environment_service.get_mock_api(),
+                            None,
+                        );
                         // make the request, if the type is Ok then set the token and update the app context
                         // if it is error then update the error boolean variable
-                        let logged_user_info =
-                            app_context.api_service.login(username, password).await;
+                        let logged_user_info = api_service.login(username, password).await;
 
                         if let Ok(ApiResponse { body, status }) = logged_user_info {
-                            if status == 200 {
-                                if let Some(body) = body {
-                                    AuthService::new()
-                                        .set_token(body.token.clone())
-                                        .expect("Failed to store token");
+                            match status {
+                                HttpStatus::Success(_) => {
+                                    if let Some(body) = body {
+                                        AuthService::new(app_context)
+                                            .set_logged_user_info(body)
+                                            .expect("Failed to store token");
 
-                                    app_context.set(AppContext {
-                                        environment_service: app_context
-                                            .environment_service
-                                            .clone(),
-                                        api_service: app_context.api_service.clone(),
-                                        user_info: Some(body),
-                                    });
-                                    login_error.set(None);
-                                } else {
-                                    // if the body is None then it is an internal error
-                                    login_error
-                                        .set(Some(String::from("Ops, something went wrong.")));
+                                        login_error.set(None);
+                                    } else {
+                                        // if the body is None then it is an internal error
+                                        login_error
+                                            .set(Some(String::from("Ops, something went wrong.")));
+                                    }
                                 }
-                            } else {
-                                login_error.set(Some(format!("Got error from backend: {status}")));
+                                _ => {
+                                    login_error
+                                        .set(Some(format!("Got error from backend: {status}")));
+                                }
                             }
                         } else {
                             error!(

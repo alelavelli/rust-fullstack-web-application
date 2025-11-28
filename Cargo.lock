@@ -791,8 +791,10 @@ dependencies = [
 name = "frontend"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "gloo-net 0.2.6",
  "gloo-storage 0.3.0",
+ "jsonwebtoken",
  "log",
  "serde",
  "thiserror 2.0.17",

@@ -1,5 +1,6 @@
 pub mod app;
 pub mod component;
+pub mod enums;
 pub mod environment;
 pub mod error;
 pub mod model;
