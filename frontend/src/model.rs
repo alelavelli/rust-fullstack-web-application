@@ -27,4 +27,6 @@ pub struct LoginInfo {
 #[serde(rename_all = "camelCase")]
 pub struct LoggedUserInfo {
     pub token: String,
+    pub user_id: String,
+    pub username: String,
 }

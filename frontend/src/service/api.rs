@@ -39,7 +39,14 @@ impl ApiService {
                 &EncodingKey::from_secret("secret".as_ref()),
             )
             .expect("failing to mock jwt");
-            (Some(LoggedUserInfo { token }), 200)
+            (
+                Some(LoggedUserInfo {
+                    token,
+                    user_id: "user-id".into(),
+                    username: "username".into(),
+                }),
+                200,
+            )
         } else {
             let login_info = LoginInfo { username, password };
 

@@ -64,8 +64,13 @@ impl AuthService {
 
             let now = chrono::offset::Local::now().timestamp() as u32;
 
+            // TODO: do not use the insecure claim but make an API request
             if insecure_decoded_claims.expiration >= now {
-                Some(LoggedUserInfo { token })
+                Some(LoggedUserInfo {
+                    token,
+                    user_id: insecure_decoded_claims.user_id,
+                    username: insecure_decoded_claims.username,
+                })
             } else {
                 self.remove_logged_user();
                 None
