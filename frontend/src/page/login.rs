@@ -52,8 +52,8 @@ pub fn login_component() -> Html {
                     if !username.trim().is_empty() && !password.trim().is_empty() {
                         let environment_service = EnvironmentService::new();
                         let api_service = ApiService::new(
-                            environment_service.get_api_url(),
-                            environment_service.get_mock_api(),
+                            environment_service.api_url,
+                            environment_service.mock,
                             None,
                         );
                         // make the request, if the type is Ok then set the token and update the app context
@@ -64,9 +64,12 @@ pub fn login_component() -> Html {
                             match status {
                                 HttpStatus::Success(_) => {
                                     if let Some(body) = body {
-                                        AuthService::new(app_context)
-                                            .set_logged_user_info(body)
-                                            .expect("Failed to store token");
+                                        AuthService::new(
+                                            environment_service.token_storage_location_name,
+                                            app_context,
+                                        )
+                                        .set_logged_user_info(body)
+                                        .expect("Failed to store token");
 
                                         login_error.set(None);
                                     } else {

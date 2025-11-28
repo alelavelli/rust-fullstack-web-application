@@ -4,8 +4,9 @@
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct EnvironmentService {
-    api_url: String,
-    mock: bool,
+    pub api_url: String,
+    pub mock: bool,
+    pub token_storage_location_name: String,
 }
 
 impl EnvironmentService {
@@ -16,14 +17,8 @@ impl EnvironmentService {
                 .unwrap_or("true".into())
                 .to_lowercase()
                 == "true".to_string(),
+            token_storage_location_name: std::env::var("TOKEN_STORAGE_LOCATION_NAME")
+                .unwrap_or("hello_blog_token".into()),
         }
-    }
-
-    pub fn get_api_url(&self) -> String {
-        self.api_url.clone()
-    }
-
-    pub fn get_mock_api(&self) -> bool {
-        self.mock
     }
 }

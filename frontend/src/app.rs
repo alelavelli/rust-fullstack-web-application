@@ -1,5 +1,6 @@
 use crate::{
     component::{footer::Footer, header::Header},
+    environment::EnvironmentService,
     page::{home::Home, login::Login, not_found::NotFound},
     service::auth::AuthService,
     types::AppContext,
@@ -33,9 +34,15 @@ pub fn app() -> Html {
     by the application */
     let app_context = use_state(|| AppContext::new(None));
 
+    let environment_service = EnvironmentService::new();
+
     // Use the AuthService to load logged user info from local storage
     // it will update the provided context with user info if they are present and valid
-    AuthService::new(app_context.clone()).load_logged_user_info();
+    AuthService::new(
+        environment_service.token_storage_location_name,
+        app_context.clone(),
+    )
+    .load_logged_user_info();
 
     html! {
         <BrowserRouter>
