@@ -1,4 +1,11 @@
+use gloo_storage::errors::StorageError;
 use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum AppError {
+    #[error("Local storage error: {0}")]
+    LocalStorage(#[from] StorageError),
+}
 
 #[derive(Error, Debug)]
 pub enum ApiError {

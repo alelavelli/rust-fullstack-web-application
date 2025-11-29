@@ -4,7 +4,7 @@ use yew::UseStateHandle;
 
 use crate::{
     model::{JWTAuthClaim, LoggedUserInfo},
-    types::AppContext,
+    types::{AppContext, AppResult},
 };
 
 /// Service responsible to manage the logged user session
@@ -28,10 +28,10 @@ impl AuthService {
         }
     }
 
-    fn load_token(&self) -> Result<Option<String>, StorageError> {
+    fn load_token(&self) -> AppResult<Option<String>> {
         match LocalStorage::get(&self.token_storage_location_name) {
             Err(StorageError::KeyNotFound(_)) => Ok(None),
-            other => other,
+            other => other.map_err(|e| e.into()),
         }
     }
 
@@ -44,7 +44,7 @@ impl AuthService {
 
     /// Given the logged user info, it stores the token on the local storage
     /// and update the application context with them
-    pub fn set_logged_user_info(&self, info: LoggedUserInfo) -> Result<(), StorageError> {
+    pub fn set_logged_user_info(&self, info: LoggedUserInfo) -> AppResult<()> {
         LocalStorage::set(&self.token_storage_location_name, info.token.clone())?;
         self.app_context.set(AppContext {
             user_info: Some(info),

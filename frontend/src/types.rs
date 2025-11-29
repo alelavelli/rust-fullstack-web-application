@@ -1,4 +1,8 @@
-use crate::{enums::HttpStatus, error::ApiError, model::LoggedUserInfo};
+use crate::{
+    enums::HttpStatus,
+    error::{ApiError, AppError},
+    model::LoggedUserInfo,
+};
 
 /// Struct containing general context for the application
 ///
@@ -21,3 +25,4 @@ pub struct ApiResponse<T> {
 }
 
 pub type ApiResult<T> = Result<ApiResponse<T>, ApiError>;
+pub type AppResult<T> = Result<T, AppError>;
