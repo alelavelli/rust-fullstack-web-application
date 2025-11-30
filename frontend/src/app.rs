@@ -5,7 +5,6 @@ use crate::{
     service::auth::AuthService,
     types::AppContext,
 };
-use log::info;
 use yew::{ContextProvider, Html, UseStateHandle, function_component, html, use_state};
 use yew_router::{BrowserRouter, Routable, Switch};
 
