@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::error;
 use web_sys::HtmlInputElement;
 use yew::{
     Callback, Html, SubmitEvent, UseStateHandle, function_component, html, use_context,
@@ -100,7 +100,6 @@ pub fn login_component() -> Html {
     };
 
     if app_context.user_info.is_some() {
-        info!("login: redirect to home");
         html! {
             <Redirect<AppRoute> to={AppRoute::Home}/>
         }

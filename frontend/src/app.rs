@@ -45,8 +45,6 @@ pub fn app() -> Html {
     )
     .set_logged_user_info_from_storage();
 
-    info!("app {user_info:?}", user_info = &app_context.user_info);
-
     html! {
         <BrowserRouter>
             <ContextProvider<UseStateHandle<AppContext>> context={app_context}>

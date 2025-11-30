@@ -1,4 +1,3 @@
-use log::info;
 use yew::{Html, UseStateHandle, function_component, html, use_context};
 use yew_router::prelude::Redirect;
 
@@ -9,7 +8,6 @@ pub fn home_component() -> Html {
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
 
     if app_context.user_info.is_none() {
-        info!("home: redirect to login");
         html! {
             <Redirect<AppRoute> to={AppRoute::Login}/>
         }
