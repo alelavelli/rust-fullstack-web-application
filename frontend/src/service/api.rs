@@ -1,5 +1,5 @@
 use crate::{
-    model::{JWTAuthClaim, LoggedUserInfo, LoginInfo},
+    model::{BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo},
     types::{ApiResponse, ApiResult},
 };
 use gloo_net::http::Request;
@@ -65,6 +65,44 @@ impl ApiService {
                 None
             };
             (body, response.status())
+        };
+
+        Ok(ApiResponse {
+            body,
+            status: status.into(),
+        })
+    }
+
+    pub async fn get_posts(&self) -> ApiResult<Vec<BlogPost>> {
+        let (body, status) = if self.mock {
+            (vec![
+                BlogPost {
+                    id: "1".into(),
+                    title: "First blog".into(),
+                    content: "this is the content of the blog. I think that I could write something but for now I can simply write a long text just to see how it will be displayed on the screen. Who know how it will be printed on the screen.".into(),
+                    creation_date: "2025/11/14".into(),
+                    creator_id: "creator-id".into(),
+                    creator_username: "alex_sinks".into()
+                },
+                BlogPost {
+                    id: "2".into(),
+                    title: "Second blog".into(),
+                    content: "this is the content of the blog. I think that I could write something but for now I can simply write a long text just to see how it will be displayed on the screen. Who know how it will be printed on the screen.".into(),
+                    creation_date: "2025/11/14".into(),
+                    creator_id: "creator-id".into(),
+                    creator_username: "alex_sinks".into()
+                },
+                BlogPost {
+                    id: "3".into(),
+                    title: "Third blog".into(),
+                    content: "this is the content of the blog. I think that I could write something but for now I can simply write a long text just to see how it will be displayed on the screen. Who know how it will be printed on the screen.".into(),
+                    creation_date: "2025/11/14".into(),
+                    creator_id: "creator-id".into(),
+                    creator_username: "alex_sinks".into()
+                }
+            ], 200)
+        } else {
+            todo!()
         };
 
         Ok(ApiResponse {
