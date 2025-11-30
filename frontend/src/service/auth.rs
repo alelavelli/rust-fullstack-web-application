@@ -57,7 +57,7 @@ impl AuthService {
     ///
     /// If the token is not present or it is expired then the user info are
     /// removed from the context
-    pub fn load_logged_user_info(&self) -> Option<LoggedUserInfo> {
+    pub fn set_logged_user_info_from_storage(&self) {
         if let Some(token) = self.load_token().unwrap_or(None) {
             // verify the token in not expired
             let insecure_decoded_claims = insecure_decode::<JWTAuthClaim>(&token).unwrap().claims;
@@ -66,17 +66,24 @@ impl AuthService {
 
             // TODO: do not use the insecure claim but make an API request
             if insecure_decoded_claims.expiration >= now {
-                Some(LoggedUserInfo {
+                let logged_user_info = LoggedUserInfo {
                     token,
                     user_id: insecure_decoded_claims.user_id,
                     username: insecure_decoded_claims.username,
-                })
+                };
+
+                if let Some(context_user_info) = &self.app_context.user_info {
+                    if logged_user_info.token != context_user_info.token {
+                        self.app_context
+                            .set(AppContext::new(Some(logged_user_info)));
+                    }
+                } else {
+                    self.app_context
+                        .set(AppContext::new(Some(logged_user_info)));
+                }
             } else {
                 self.remove_logged_user();
-                None
             }
-        } else {
-            None
         }
     }
 

@@ -5,6 +5,7 @@ use crate::{
     service::auth::AuthService,
     types::AppContext,
 };
+use log::info;
 use yew::{ContextProvider, Html, UseStateHandle, function_component, html, use_state};
 use yew_router::{BrowserRouter, Routable, Switch};
 
@@ -42,7 +43,9 @@ pub fn app() -> Html {
         environment_service.token_storage_location_name,
         app_context.clone(),
     )
-    .load_logged_user_info();
+    .set_logged_user_info_from_storage();
+
+    info!("app {user_info:?}", user_info = &app_context.user_info);
 
     html! {
         <BrowserRouter>
