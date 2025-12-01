@@ -84,7 +84,7 @@ pub fn home_component() -> Html {
                 <h1>{ "Hello Blog!" }</h1>
                 <h2>{ "Your personal blog written totally in Rust ;)" }</h2>
                 </div>
-                <div>
+                <div class="blog-posts-list-container">
                     <h3>{"Here the list of published posts:"}</h3>
                     <PostsList posts={(*blog_posts).clone()} on_click={on_post_select}/>
                 </div>

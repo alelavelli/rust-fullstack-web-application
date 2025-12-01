@@ -99,3 +99,33 @@ footer {
   flex-direction: column;
   gap: 0.5rem;
 }
+
+.blog-posts-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0rem;
+}
+
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5;
+
+  .post-list-entry {
+    cursor: pointer;
+    margin-left: 1rem;
+  }
+
+  .post-list-entry:hover {
+    color: #013e3f;
+  }
+}
+
+.blog-post-details {
+
+  .blog-post-content {
+    padding: 2rem;
+    background-color: #013e3f34;
+  }
+}

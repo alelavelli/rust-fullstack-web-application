@@ -10,10 +10,10 @@ pub struct PostDetailProps {
 #[function_component(PostDetails)]
 pub fn post_details(PostDetailProps { post }: &PostDetailProps) -> Html {
     html! {
-        <div>
-            <p>{post.title.clone()}</p>
-            <p>{format!("written by {} on {}", post.creator_username, post.creation_date)}</p>
-            <p>{post.content.clone()}</p>
+        <div class="blog-post-details">
+            <h4>{post.title.clone()}</h4>
+            <i>{format!("written by {} on {}", post.creator_username, post.creation_date)}</i>
+            <p class="blog-post-content">{post.content.clone()}</p>
         </div>
     }
 }
