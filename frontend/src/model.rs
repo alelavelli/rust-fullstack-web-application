@@ -30,3 +30,10 @@ pub struct LoggedUserInfo {
     pub user_id: String,
     pub username: String,
 }
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PublishPostRequest {
+    pub title: String,
+    pub content: String,
+}

@@ -1,5 +1,6 @@
 use crate::{
-    model::{BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo},
+    error::ApiError,
+    model::{BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo, PublishPostRequest},
     types::{ApiResponse, ApiResult},
 };
 use gloo_net::http::Request;
@@ -74,8 +75,9 @@ impl ApiService {
     }
 
     pub async fn get_posts(&self) -> ApiResult<Vec<BlogPost>> {
-        let (body, status) = if self.mock {
-            (vec![
+        if let Some(token) = &self.token {
+            let (body, status) = if self.mock {
+                (vec![
                 BlogPost {
                     id: "1".into(),
                     title: "First blog".into(),
@@ -101,13 +103,63 @@ impl ApiService {
                     creator_username: "alex_sinks".into()
                 }
             ], 200)
-        } else {
-            todo!()
-        };
+            } else {
+                let mut url = String::from(&self.api_url);
+                url.push_str("/blog/post");
 
-        Ok(ApiResponse {
-            body,
-            status: status.into(),
-        })
+                let response = Request::get(&url)
+                    .header("Content=Type", "application/json")
+                    .header("Authorization", &format!("Bearer {token}"))
+                    .send()
+                    .await?;
+
+                let body = if response.status() == 200 {
+                    response.json::<Vec<BlogPost>>().await?
+                } else {
+                    Vec::new()
+                };
+                (body, response.status())
+            };
+
+            Ok(ApiResponse {
+                body,
+                status: status.into(),
+            })
+        } else {
+            Err(ApiError::AuthorizationError(
+                "Missing authorization token".to_string(),
+            ))
+        }
+    }
+
+    pub async fn publish_post(&self, title: String, content: String) -> ApiResult<()> {
+        if let Some(token) = &self.token {
+            let (body, status) = if self.mock {
+                ((), 200)
+            } else {
+                let mut url = String::from(&self.api_url);
+                url.push_str("/blog/post");
+
+                let request_payload = PublishPostRequest { title, content };
+
+                let response = Request::post(&url)
+                    .header("Content=Type", "application/json")
+                    .header("Authorization", &format!("Bearer {token}"))
+                    .json(&request_payload)?
+                    .send()
+                    .await?;
+
+                ((), response.status())
+            };
+
+            Ok(ApiResponse {
+                body,
+                status: status.into(),
+            })
+        } else {
+            Err(ApiError::AuthorizationError(
+                "Missing authorization token".to_string(),
+            ))
+        }
     }
 }

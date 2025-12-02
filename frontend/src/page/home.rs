@@ -7,7 +7,7 @@ use yew_router::prelude::Redirect;
 
 use crate::{
     app::AppRoute,
-    component::{post_details::PostDetails, post_list::PostsList},
+    component::{post_details::PostDetails, post_form::PostForm, post_list::PostsList},
     enums::HttpStatus,
     environment::EnvironmentService,
     model::{BlogPost, LoggedUserInfo},
@@ -19,9 +19,10 @@ use crate::{
 pub fn home_component() -> Html {
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
     let user_info: UseStateHandle<Option<LoggedUserInfo>> = use_state(|| None);
-    let blog_posts: UseStateHandle<Vec<BlogPost>> = use_state(|| vec![]);
+    let blog_posts: UseStateHandle<Vec<BlogPost>> = use_state(Vec::new);
     let blog_post_error = use_state(|| None);
     let selected_post = use_state(|| None);
+    let write_new_post = use_state(|| false);
 
     {
         let blog_posts = blog_posts.clone();
@@ -60,9 +61,25 @@ pub fn home_component() -> Html {
         });
     }
 
+    let onclick_write_post = {
+        let write_new_post = write_new_post.clone();
+        Callback::from(move |_| {
+            if !*write_new_post {
+                write_new_post.set(true);
+            }
+        })
+    };
+
+    let on_close_post_form = {
+        let write_new_post = write_new_post.clone();
+        Callback::from(move |_| {
+            write_new_post.set(false);
+        })
+    };
+
     if let Some(context_user_info) = app_context.user_info.clone() {
         if user_info.is_none() {
-            user_info.set(Some(context_user_info));
+            user_info.set(Some(context_user_info.clone()));
         }
 
         let blog_posts = blog_posts.clone();
@@ -83,6 +100,12 @@ pub fn home_component() -> Html {
                 <div>
                 <h1>{ "Hello Blog!" }</h1>
                 <h2>{ "Your personal blog written totally in Rust ;)" }</h2>
+                </div>
+                <div class="home-write-post-container">
+                    <button class="form-button-primary" onclick={onclick_write_post}>{"Write a new post"}</button>
+                    if *write_new_post {
+                        <PostForm on_close={on_close_post_form} user_info={context_user_info}/>
+                    }
                 </div>
                 <div class="blog-posts-list-container">
                     <h3>{"Here the list of published posts:"}</h3>

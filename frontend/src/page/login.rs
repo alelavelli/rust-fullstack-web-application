@@ -51,48 +51,48 @@ pub fn login_component() -> Html {
             let app_context = app_context_clone.clone();
 
             wasm_bindgen_futures::spawn_local(async move {
-                if let (Some(username), Some(password)) = (username, password) {
-                    if !username.trim().is_empty() && !password.trim().is_empty() {
-                        let environment_service = EnvironmentService::new();
-                        let api_service = ApiService::new(
-                            environment_service.api_url,
-                            environment_service.mock,
-                            None,
-                        );
-                        // make the request, if the type is Ok then set the token and update the app context
-                        // if it is error then update the error boolean variable
-                        let logged_user_info = api_service.login(username, password).await;
+                if let (Some(username), Some(password)) = (username, password)
+                    && !username.trim().is_empty()
+                    && !password.trim().is_empty()
+                {
+                    let environment_service = EnvironmentService::new();
+                    let api_service = ApiService::new(
+                        environment_service.api_url,
+                        environment_service.mock,
+                        None,
+                    );
+                    // make the request, if the type is Ok then set the token and update the app context
+                    // if it is error then update the error boolean variable
+                    let logged_user_info = api_service.login(username, password).await;
 
-                        if let Ok(ApiResponse { body, status }) = logged_user_info {
-                            match status {
-                                HttpStatus::Success(_) => {
-                                    if let Some(body) = body {
-                                        AuthService::new(
-                                            environment_service.token_storage_location_name,
-                                            app_context,
-                                        )
-                                        .set_logged_user_info(body)
-                                        .expect("Failed to store token");
+                    if let Ok(ApiResponse { body, status }) = logged_user_info {
+                        match status {
+                            HttpStatus::Success(_) => {
+                                if let Some(body) = body {
+                                    AuthService::new(
+                                        environment_service.token_storage_location_name,
+                                        app_context,
+                                    )
+                                    .set_logged_user_info(body)
+                                    .expect("Failed to store token");
 
-                                        login_error.set(None);
-                                    } else {
-                                        // if the body is None then it is an internal error
-                                        login_error
-                                            .set(Some(String::from("Ops, something went wrong.")));
-                                    }
-                                }
-                                _ => {
+                                    login_error.set(None);
+                                } else {
+                                    // if the body is None then it is an internal error
                                     login_error
-                                        .set(Some(format!("Got error from backend: {status}")));
+                                        .set(Some(String::from("Ops, something went wrong.")));
                                 }
                             }
-                        } else {
-                            error!(
-                                "Encountered an error in login request. Error {err}",
-                                err = logged_user_info.err().unwrap()
-                            );
-                            login_error.set(Some("Got error from backend".to_string()));
+                            _ => {
+                                login_error.set(Some(format!("Got error from backend: {status}")));
+                            }
                         }
+                    } else {
+                        error!(
+                            "Encountered an error in login request. Error {err}",
+                            err = logged_user_info.err().unwrap()
+                        );
+                        login_error.set(Some("Got error from backend".to_string()));
                     }
                 }
             });
@@ -115,7 +115,7 @@ pub fn login_component() -> Html {
                     <fieldset>
                         <input type="password" placeholder="password" ref={password_node_ref}/>
                     </fieldset>
-                    <button type="submit">{"Login"}</button>
+                    <button type="submit" class="form-button-primary">{"Login"}</button>
                     if let Some(error_msg) = (*login_error).clone() {
                         <p style="color:red">{error_msg}</p>
                     }

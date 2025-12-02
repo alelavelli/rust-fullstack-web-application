@@ -16,7 +16,7 @@ impl EnvironmentService {
             mock: std::env::var("MOCK_API")
                 .unwrap_or("true".into())
                 .to_lowercase()
-                == "true".to_string(),
+                == "true",
             token_storage_location_name: std::env::var("TOKEN_STORAGE_LOCATION_NAME")
                 .unwrap_or("hello_blog_token".into()),
         }
