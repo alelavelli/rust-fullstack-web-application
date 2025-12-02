@@ -105,7 +105,7 @@ impl ApiService {
             ], 200)
             } else {
                 let mut url = String::from(&self.api_url);
-                url.push_str("/blog/post");
+                url.push_str("/user/blog/post");
 
                 let response = Request::get(&url)
                     .header("Content=Type", "application/json")
@@ -138,7 +138,7 @@ impl ApiService {
                 ((), 200)
             } else {
                 let mut url = String::from(&self.api_url);
-                url.push_str("/blog/post");
+                url.push_str("/user/blog/post");
 
                 let request_payload = PublishPostRequest { title, content };
 

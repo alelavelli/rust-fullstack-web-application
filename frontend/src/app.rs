@@ -1,7 +1,7 @@
 use crate::{
     component::{footer::Footer, header::Header},
     environment::EnvironmentService,
-    page::{home::Home, login::Login, not_found::NotFound},
+    page::{admin::Admin, home::Home, login::Login, not_found::NotFound},
     service::auth::AuthService,
     types::AppContext,
 };
@@ -14,6 +14,8 @@ pub enum AppRoute {
     Login,
     #[at("/")]
     Home,
+    #[at("/admin")]
+    Admin,
     #[not_found]
     #[at("/not-found")]
     NotFound,
@@ -23,6 +25,7 @@ fn switch(route: AppRoute) -> Html {
     match route {
         AppRoute::Home => html! { <Home /> },
         AppRoute::Login => html! { <Login /> },
+        AppRoute::Admin => html! { <Admin /> },
         AppRoute::NotFound => html! { <NotFound /> },
     }
 }
