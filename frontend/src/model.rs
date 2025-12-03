@@ -29,6 +29,8 @@ pub struct LoggedUserInfo {
     pub token: String,
     pub user_id: String,
     pub username: String,
+    #[serde(default)]
+    pub admin: Option<bool>,
 }
 
 #[derive(Serialize, Clone)]

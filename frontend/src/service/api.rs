@@ -45,6 +45,7 @@ impl ApiService {
                     token,
                     user_id: "user-id".into(),
                     username: "username".into(),
+                    admin: Some(true),
                 }),
                 200,
             )
@@ -72,6 +73,59 @@ impl ApiService {
             body,
             status: status.into(),
         })
+    }
+
+    pub async fn get_user_info(&self) -> ApiResult<Option<LoggedUserInfo>> {
+        if let Some(token) = &self.token {
+            let (body, status) = if self.mock {
+                let now = chrono::offset::Local::now().timestamp() as u32;
+                let claims = JWTAuthClaim {
+                    user_id: "user-id".into(),
+                    username: "username".into(),
+                    expiration: now + 10000,
+                };
+                let token = encode(
+                    &Header::default(),
+                    &claims,
+                    &EncodingKey::from_secret("secret".as_ref()),
+                )
+                .expect("failing to mock jwt");
+                (
+                    Some(LoggedUserInfo {
+                        token,
+                        user_id: "user-id".into(),
+                        username: "username".into(),
+                        admin: Some(true),
+                    }),
+                    200,
+                )
+            } else {
+                let mut url = String::from(&self.api_url);
+                url.push_str("/user/info");
+
+                let response = Request::get(&url)
+                    .header("Content=Type", "application/json")
+                    .header("Authorization", &format!("Bearer {token}"))
+                    .send()
+                    .await?;
+
+                let body = if response.status() == 200 {
+                    response.json::<Option<LoggedUserInfo>>().await?
+                } else {
+                    None
+                };
+                (body, response.status())
+            };
+
+            Ok(ApiResponse {
+                body,
+                status: status.into(),
+            })
+        } else {
+            Err(ApiError::AuthorizationError(
+                "Missing authorization token".to_string(),
+            ))
+        }
     }
 
     pub async fn get_posts(&self) -> ApiResult<Vec<BlogPost>> {

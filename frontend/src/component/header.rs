@@ -9,7 +9,7 @@ use crate::{
 pub fn header_component() -> Html {
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
 
-    let onclick = {
+    let onclick_logout = {
         let app_context = app_context.clone();
         Callback::from(move |_| {
             let environment_service = EnvironmentService::new();
@@ -29,7 +29,12 @@ pub fn header_component() -> Html {
             if let Some(user_info) = &app_context.user_info {
                 <div>
                     <p>{format!("Hi {}!", user_info.username)}</p>
-                    <button {onclick} class="header-link">{"Logout"}</button>
+                    <div class="header-action-container">
+                        <button onclick={onclick_logout} class="header-link">{"Logout"}</button>
+                        if let Some(admin) = user_info.admin && admin{
+                            <Link<AppRoute> to={AppRoute::Admin} classes="header-link"> { "Admin panel" } </Link<AppRoute>>
+                        }
+                    </div>
                 </div>
             } else {
                 <Link<AppRoute> to={AppRoute::Login} classes="header-link"> {"Login"} </Link<AppRoute>>

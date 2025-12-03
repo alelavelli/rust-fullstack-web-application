@@ -1,10 +1,14 @@
 use gloo_storage::{LocalStorage, Storage, errors::StorageError};
 use jsonwebtoken::dangerous::insecure_decode;
+use log::error;
 use yew::UseStateHandle;
 
 use crate::{
+    enums::HttpStatus,
+    environment::EnvironmentService,
     model::{JWTAuthClaim, LoggedUserInfo},
-    types::{AppContext, AppResult},
+    service::api::ApiService,
+    types::{ApiResponse, AppContext, AppResult},
 };
 
 /// Service responsible to manage the logged user session
@@ -12,6 +16,7 @@ use crate::{
 ///
 /// It updates the application context with the logged user
 /// and manage the local storage for the token
+#[derive(Clone)]
 pub struct AuthService {
     app_context: UseStateHandle<AppContext>,
     token_storage_location_name: String,
@@ -64,23 +69,47 @@ impl AuthService {
 
             let now = chrono::offset::Local::now().timestamp() as u32;
 
-            // TODO: do not use the insecure claim but make an API request
             if insecure_decoded_claims.expiration >= now {
-                let logged_user_info = LoggedUserInfo {
-                    token,
-                    user_id: insecure_decoded_claims.user_id,
-                    username: insecure_decoded_claims.username,
-                };
+                // We make an api request to get the actual user information to validate the
+                // ones read from the local storage. Moreover, this api request returns the
+                // information if the user is admin
+                let environment_service = EnvironmentService::new();
+                let api_service = ApiService::new(
+                    environment_service.api_url,
+                    environment_service.mock,
+                    Some(token.clone()),
+                );
 
-                if let Some(context_user_info) = &self.app_context.user_info {
-                    if logged_user_info.token != context_user_info.token {
-                        self.app_context
-                            .set(AppContext::new(Some(logged_user_info)));
+                let app_context = self.app_context.clone();
+                let self_clone = self.clone();
+
+                wasm_bindgen_futures::spawn_local(async move {
+                    let response = api_service.get_user_info().await;
+                    if let Ok(ApiResponse { body, status }) = response {
+                        match status {
+                            HttpStatus::Success(_) => {
+                                let body = body.expect("Token must be present when it is success");
+                                if let Some(context_user_info) = &app_context.user_info {
+                                    if body.token != context_user_info.token {
+                                        app_context.set(AppContext::new(Some(body)));
+                                    }
+                                } else {
+                                    app_context.set(AppContext::new(Some(body)));
+                                }
+                            }
+                            _ => {
+                                self_clone.remove_logged_user();
+                                error!("Response returned status {status}", status = status);
+                            }
+                        }
+                    } else {
+                        self_clone.remove_logged_user();
+                        error!(
+                            "Encountered an error in get user info request. Error {err}",
+                            err = response.err().unwrap()
+                        );
                     }
-                } else {
-                    self.app_context
-                        .set(AppContext::new(Some(logged_user_info)));
-                }
+                });
             } else {
                 self.remove_logged_user();
             }
