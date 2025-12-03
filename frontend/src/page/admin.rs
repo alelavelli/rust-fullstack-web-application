@@ -1,15 +1,21 @@
-use yew::{Html, function_component};
+use yew::{Html, UseStateHandle, function_component, html, use_context};
+use yew_router::prelude::Redirect;
+
+use crate::{app::AppRoute, types::AppContext};
 
 #[function_component(Admin)]
 pub fn admin_component() -> Html {
-    /*
-    Bisogna fare una richiesta per verificare se l'utente sia admin
-    Questa info non la si può salvare nel local storage perché non è
-    sicuro.
+    let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
 
-    Se l'utente non è admin allora si porta a not found
-    Nell'header si aggiunge anche un link the porta alla admin page
-    quando l'utente è admin.
-    */
-    todo!()
+    if let Some(context_user_info) = app_context.user_info.clone()
+        && context_user_info.admin.is_some_and(|x| x)
+    {
+        html! {
+            <h2>{"Admin panel"}</h2>
+        }
+    } else {
+        html! {
+            <Redirect<AppRoute> to={AppRoute::NotFound}/>
+        }
+    }
 }

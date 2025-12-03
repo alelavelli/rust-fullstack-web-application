@@ -109,12 +109,8 @@ pub fn login_component() -> Html {
                 <h1>{"Welcome to Hello Blog!"}</h1>
                 <div>{"Please insert your credentials and log in."}</div>
                 <form class="form-container" {onsubmit}>
-                    <fieldset>
                         <input type="text" placeholder="username" ref={username_node_ref}/>
-                    </fieldset>
-                    <fieldset>
                         <input type="password" placeholder="password" ref={password_node_ref}/>
-                    </fieldset>
                     <button type="submit" class="form-button-primary">{"Login"}</button>
                     if let Some(error_msg) = (*login_error).clone() {
                         <p style="color:red">{error_msg}</p>
