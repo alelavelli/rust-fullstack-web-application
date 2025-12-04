@@ -33,6 +33,14 @@ pub struct LoggedUserInfo {
     pub admin: Option<bool>,
 }
 
+#[derive(Clone, PartialEq, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct UserInfo {
+    pub user_id: String,
+    pub username: String,
+    pub admin: bool,
+}
+
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PublishPostRequest {

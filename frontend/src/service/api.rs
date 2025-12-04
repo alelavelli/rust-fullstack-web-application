@@ -1,6 +1,6 @@
 use crate::{
     error::ApiError,
-    model::{BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo, PublishPostRequest},
+    model::{BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo, PublishPostRequest, UserInfo},
     types::{ApiResponse, ApiResult},
 };
 use gloo_net::http::Request;
@@ -204,6 +204,58 @@ impl ApiService {
                     .await?;
 
                 ((), response.status())
+            };
+
+            Ok(ApiResponse {
+                body,
+                status: status.into(),
+            })
+        } else {
+            Err(ApiError::AuthorizationError(
+                "Missing authorization token".to_string(),
+            ))
+        }
+    }
+
+    pub async fn get_admin_users_list(&self) -> ApiResult<Vec<UserInfo>> {
+        if let Some(token) = &self.token {
+            let (body, status) = if self.mock {
+                (
+                    vec![
+                        UserInfo {
+                            user_id: "user-0".into(),
+                            username: "username-0".into(),
+                            admin: false,
+                        },
+                        UserInfo {
+                            user_id: "user-1".into(),
+                            username: "username-1".into(),
+                            admin: true,
+                        },
+                        UserInfo {
+                            user_id: "user-2".into(),
+                            username: "username-2".into(),
+                            admin: false,
+                        },
+                    ],
+                    200,
+                )
+            } else {
+                let mut url = String::from(&self.api_url);
+                url.push_str("/admin/user");
+
+                let response = Request::get(&url)
+                    .header("Content=Type", "application/json")
+                    .header("Authorization", &format!("Bearer {token}"))
+                    .send()
+                    .await?;
+
+                let body = if response.status() == 200 {
+                    response.json::<Vec<UserInfo>>().await?
+                } else {
+                    Vec::new()
+                };
+                (body, response.status())
             };
 
             Ok(ApiResponse {

@@ -180,3 +180,21 @@ footer {
     justify-content: right;
   }
 }
+
+.admin-user-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5;
+
+  .users-list-entry {
+    cursor: pointer;
+    margin-left: 1rem;
+  }
+}
