@@ -16,6 +16,10 @@ _Table 1: frameworks of architectural components._
 
 The application is accessibile via Browser and API and provides all functionalities that a common application has: CRUD operations to database, authorization and access control, routers, facades and services components.
 
+> Disclamer: any line of code in this repository was written by human hands! Obviously, sometimes I used an LLM as support tool for boring tasks like writing down the css classes but there is no vibe-coding here.
+> The backend comes from two previous projects `sandbox-rust-web-app` and `employees-manager`, it is a more mature version.
+> The frontend is completely learned here (as you can see from the commit history) and vibe-coding was totally useless to learn this framework.
+
 ## Backend
 
 The backend entry point, `main.rs`, configures basic services and starts the `axum` application to listen for requests from the clients:
