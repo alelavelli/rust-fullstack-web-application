@@ -1,0 +1,11 @@
+db_name := "hello-blog-database"
+
+default:
+  just --list
+
+create-local-db-checkpoint:
+    mongodump --uri="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true" --db={{db_name}} --out=db_checkpoint --quiet
+
+restore-local-db-checkpoint:
+    docker exec hb-database mongosh --quiet --eval "rs.initiate();" && \
+    mongorestore --drop --uri="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true" --db={{db_name}} db_checkpoint/{{db_name}}/ --quiet

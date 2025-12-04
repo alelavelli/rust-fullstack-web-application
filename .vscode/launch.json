@@ -22,6 +22,13 @@
             "envFile": ".env",
             "args": [],
             "cwd": "${workspaceFolder}"
-        }
+        },
+        {
+            "name": "Frontend",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "trunk serve",
+            "cwd": "${workspaceFolder}/frontend"
+        },
     ]
 }

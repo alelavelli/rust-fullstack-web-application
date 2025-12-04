@@ -1,3 +1,6 @@
+use frontend::app::App;
+
 fn main() {
-    println!("Hello, world!");
+    wasm_logger::init(wasm_logger::Config::default());
+    yew::Renderer::<App>::new().render();
 }
