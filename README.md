@@ -235,3 +235,107 @@ In its implementation there is the method `to_status_message` that translate eac
 It is separated with `ServiceAppError` because according to the context we can mask some internal errors to `InternalServerError`.
 
 Facades are responsible to explicitly translated `ServiceAppError` returned type into `AppError` to correctly communicate the error to the client.
+
+## Frontend
+
+> A little disclamer before reading the frontend description: this is my first experience in writing a Rust frontend with `yew`.
+> I decided to do not use external visual crates for nicer components but to leverage only the base yew crate.
+> I wanted to focus on the application logic instead of UI.
+>
+> Moreover, being this the first experience in writing a frontend in Rust it could be possible that I used some anti-patterns.
+> Any PR is kindly accepted ;)
+
+The entry files in the frontend package are `index.html`, `index.scss` and `src/main.rs` that strictly follows the Yew tutorial.
+In particular, `index.scss` contains all the styles, for more complex projects it could be split into different files.
+`main.rs` is pretty straightforward and the only different is the initialization of the logging system though `wasm_logger::init(wasm_logger::Config::default());`.
+
+The real application starts from the `src/app.rs` file with all the other components.
+
+The frontend crate is structured as following:
+
+- `app` contains the routes definition, initializes the context providing it to all the other components;
+- `service` module defines the services used by the frontend application: api and auth;
+- `page` module contains the web app pages
+- `component` module contains the components used by the
+
+Other modules are `environment`, `enums`, `types`, `model` and `error` that will be explained later.
+
+### Environment Module
+
+The environment service follows the same principles as the backend, it collects all the environment variables that will be used by the application.
+
+> Note: differently from the backend, there are no environment variables available at runtime, so the current implementation always takes the default values.
+> Hence, the parametrization of the environment must be done in a different way through Trunk maybe.
+
+The `mock` environment variable is used for testing purposes to route returned mocked types instead of doing the actual API request.
+This is very useful because allows the developer to write the frontend application without an actual backend implementation.
+
+### App component
+
+The `App` component is the entry point of the Single Page Application.
+
+The module defines the routes using `yew-router` crate as an enum.
+Each route is associated with a page function component that will render the page.
+
+So, the html block returned by `App` is composed of different elements.
+At the external level there is `BrowserRouter` that handles the navigation on the browser; then there is `ContextProvider` that allows to access to the application context; after that there is the rendered components: header, main and footer.
+
+In addition, the `App` function component instantiate the application context and set the logged user info from the local storage.
+More details in the next sections.
+
+### AppContext
+
+The module `types` defines general application types like `ApiResponse<T>` or results and `AppContext`.
+
+The `AppContext` struct contains all the common information that any component in the application need to access to.
+In particular, it contains the `LoggedUserInfo` that identify the current user in the session.
+It is `None` for guest users and `Some` for logged ones.
+
+The `AppContext` object is stored inside a state handle so that it can be cloned among the different components.
+
+### AuthService
+
+`AuthService` is responsible to manage the current session interacting with the browser's local storage.
+
+Its constructor method requires the storage location name to use for storing and reading informations and the app context.
+
+It provides three methods:
+
+- `get_auth_token`: returns the authorization token (jwt) from the application context without interacting with the local storage
+- `remove_logged_user`: clear the local storage and the app context object from the current user
+- `set_logged_user_info_from_storage`: reads from the local storage the auth information, then performs an API request to get the trusted actual user information and updates the app context object with them
+
+> Important note: we aware that upading the context object will trigger the rendering of the entire application component since it is in the `ContextProvider` block.
+> For this reason, the method to set the logged user info is done once by the `App` component.
+
+### ApiService
+
+`ApiService` is responsible to make requests to the API backend server.
+It is initialized with the api url, the session user token and the mock parameter.
+
+For now, there is only one ApiService struct because the application is a toy example.
+For more complex scenarios, more api services can be created to separate concerns like the routers in the backend.
+
+Any request method returns an `ApiResult` type that has `ApiResponse` type in the Ok variant and `ApiError` in the Err one.
+
+`ApiResponse` contains the body as generic and the response status, `HttpStatus` enum.
+Note that `ApiResponse` accept a generic `T` as type parameter, however, it is highly common to use `Option<T>` for non success responses.
+
+### Application page
+
+I will not explain all the pages in this repo but I will show the common structure and idea.
+
+First of all, the page component access the app context to understand if there is a logged user or not and redirects accordingly.
+For instance, the login page redirects to home when there is a logged user while the other pages redirect to login page when there is no logged user.
+Admin page has an additional control since it can be accessed only by admin users and it automatically redirects to not-found page when there is a standard user.
+
+The actual body of the page contains the html elements to render the page.
+
+> Note that this application does not rely on external elements crates like yew-material because I wanted to focus on the application logic.
+
+The crate `wasm_bindgen_futures` is used to spawn futures on the local thread to use the api service making requests to the backend.
+
+### Components
+
+The `component` module contains several components that are used by the application pages like the header, the footer or specific ones like post details or user list.
+Usually, components requires some inputs using the properties.
