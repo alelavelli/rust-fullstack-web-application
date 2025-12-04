@@ -24,7 +24,7 @@ The application is accessibile via Browser and API and provides all functionalit
 
 The backend entry point, `main.rs`, configures basic services and starts the `axum` application to listen for requests from the clients:
 
-1. The `EnvironemntService` and the `MongoDBDatabaseService` objects are created to form the `AppState` that will be shared among the rest of the application.
+1. The `EnvironmentService` and the `MongoDBDatabaseService` objects are created to form the `AppState` that will be shared among the rest of the application.
 2. Logging is setup initializing `tracing_subcriber`.
 3. A `TcpListener` is created to listen on the specified port
 4. The application `Router` is built and then served by the listener
@@ -32,7 +32,7 @@ The backend entry point, `main.rs`, configures basic services and starts the `ax
 ### Application Router
 
 The application router is `axum::Router` struct and according to the variable `FrontendMode` serves only backend routes or static frontend resources as well.
-The router is composed of serveral nested routers, one for each application usage line (guest, admin, user, ...).
+The router is composed of several nested routers, one for each application usage line (guest, admin, user, ...).
 
 > Note that the definition of routers in this way is totally arbitrary but I prefer to divide routes like this because it separate user personas facilitating the consequent RBAC.
 
@@ -40,7 +40,7 @@ Routers are added using utility methods present in `backend::router` by specifyi
 
 Middlewares are attached to the application router:
 
-- _Database Transaction:_ starts a new transaction when the request method is different from GET comitting or aborting it according to the result type
+- _Database Transaction:_ starts a new transaction when the request method is different from GET committing or aborting it according to the result type
 - _Logging:_ setup logging for the routes
 - _CORS:_ defines CORS policy for the application
 
@@ -52,7 +52,7 @@ All the nested routers follows the same structure, hence I will explain the unde
 
 Each module has a utility method `add_this_router` that is used to nest the router as describe above.
 
-The router has several routes that it serves, since it is a REST API, the routes names are for the resources and the HTTP method defines the behiavior.
+The router has several routes that it serves, since it is a REST API, the routes names are for the resources and the HTTP method defines the behavior.
 
 A route handler takes as parameters:
 
@@ -82,7 +82,7 @@ Each facade returns the `FacadeResult` type which is an alias for `Result<T, App
 
 #### Guest Facade
 
-The guest facade, as you can guess, is used for requests done by unauthenticated clients and beyon the contructor function `new`, it provides only the `authenticate_user` method.
+The guest facade, as you can guess, is used for requests done by unauthenticated clients and beyond the constructor function `new`, it provides only the `authenticate_user` method.
 
 #### Admin Facade
 
@@ -135,7 +135,7 @@ Database service is more complex because I wanted to exchange it with different 
 
 For this reason, there is the `DatabaseServiceTrait` that provides essential behaviors required by a type to be a database service.
 
-In particular, it provides the methods to start and close a databaes connection, `connect(&mut self)` and `shutdown(&mut self)` respectively.
+In particular, it provides the methods to start and close a database connection, `connect(&mut self)` and `shutdown(&mut self)` respectively.
 
 Then there is a method to create a new database transaction `new_transaction(&self)` and several methods to perform database operations like inserting new documents.
 These methods has a generic type `T: DatabaseDocumentTrait` that is used to deserialize correctly the retrieved documents.
@@ -234,7 +234,7 @@ In its implementation there is the method `to_status_message` that translate eac
 
 #### AppError
 
-`AppError` is the error type returned by facades and routers' handlers and implements the trait `IntoReponse` to be automatically translated into HTTP response code and message.
+`AppError` is the error type returned by facades and routers' handlers and implements the trait `IntoResponse` to be automatically translated into HTTP response code and message.
 
 It is separated with `ServiceAppError` because according to the context we can mask some internal errors to `InternalServerError`.
 
@@ -242,7 +242,7 @@ Facades are responsible to explicitly translated `ServiceAppError` returned type
 
 ## Frontend
 
-> A little disclamer before reading the frontend description: this is my first experience in writing a Rust frontend with `yew`.
+> A little disclaimer before reading the frontend description: this is my first experience in writing a Rust frontend with `yew`.
 > I decided to do not use external visual crates for nicer components but to leverage only the base yew crate.
 > I wanted to focus on the application logic instead of UI.
 >
@@ -301,7 +301,7 @@ The `AppContext` object is stored inside a state handle so that it can be cloned
 
 `AuthService` is responsible to manage the current session interacting with the browser's local storage.
 
-Its constructor method requires the storage location name to use for storing and reading informations and the app context.
+Its constructor method requires the storage location name to use for storing and reading information and the app context.
 
 It provides three methods:
 
@@ -309,7 +309,7 @@ It provides three methods:
 - `remove_logged_user`: clear the local storage and the app context object from the current user
 - `set_logged_user_info_from_storage`: reads from the local storage the auth information, then performs an API request to get the trusted actual user information and updates the app context object with them
 
-> Important note: we aware that upading the context object will trigger the rendering of the entire application component since it is in the `ContextProvider` block.
+> Important note: we aware that updating the context object will trigger the rendering of the entire application component since it is in the `ContextProvider` block.
 > For this reason, the method to set the logged user info is done once by the `App` component.
 
 ### ApiService
