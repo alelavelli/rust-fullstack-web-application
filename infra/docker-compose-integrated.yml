@@ -1,0 +1,59 @@
+name: hello-blog-integrated
+
+services:
+  mongodb:
+    image: mongo:7.0.14
+    container_name: hb-database
+    command: mongod --replSet rs0
+    ports:
+      - "27117:27017"
+    networks:
+      - hb-network
+    healthcheck:
+      test: echo 'db.stats().ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - hb_database_data:/data/db
+      - hb_database_logs:/data/logs
+
+  backend:
+    image: hello-blog-integrated
+    container_name: hb-backend
+    environment:
+      LOGGING_LEVEL: "TRACE"
+      LOGGING_INCLUDE_HEADERS: "false"
+      DEPLOY_ENVIRONMENT: "dev"
+      JWT_SECRET: "secret"
+      JWT_EXPIRATION: 10000
+      OBJECT_STORAGE_BACKEND: "LocalFileSystem"
+      OBJECT_STORAGE_PREFIX_PATH: "./data"
+      FRONTEND_MODE: "integrated"
+      MONGODB_CONNECTION_STRING: "mongodb://hb-database/{}?replicaSet=rs0&directConnection=true"
+      MONGODB_DB_NAME: hello-blog-database
+    healthcheck:
+      test: curl -f "http://localhost:3000/"
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - hb-network
+    volumes:
+      - hb_backend_logs:/app/logs
+
+networks:
+  hb-network:
+
+
+volumes:
+  hb_database_data:
+  hb_database_logs:
+  hb_backend_logs:

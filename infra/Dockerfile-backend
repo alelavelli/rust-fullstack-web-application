@@ -1,0 +1,11 @@
+FROM rust:1 as build-env
+WORKDIR /app
+COPY backend /app/backend
+COPY Cargo.toml /app/Cargo.toml
+COPY Cargo.lock /app/Cargo.lock
+
+RUN cargo build --release
+
+FROM gcr.io/distroless/cc-debian12
+COPY --from=build-env /app/target/release/backend /
+CMD ["./backend"]

@@ -343,3 +343,15 @@ The crate `wasm_bindgen_futures` is used to spawn futures on the local thread to
 
 The `component` module contains several components that are used by the application pages like the header, the footer or specific ones like post details or user list.
 Usually, components requires some inputs using the properties.
+
+## Infrastructure
+
+The application is served as docker containers using docker compose for local execution.
+The `infra` folder contains all the docker files, Just commands and docker compose specs.
+
+### Frontend container
+
+Following the suggestion of the [documentation](https://yew.rs/docs/more/deployment) we do not use `trunk serve` to serve our frontend application in production.
+Instead, we compile the code and then serving it via a nginx server.
+
+Note that, in case of integrated deployment mode the backend will serve the frontend files.

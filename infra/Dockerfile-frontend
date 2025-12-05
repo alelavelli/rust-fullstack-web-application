@@ -1,0 +1,27 @@
+# --- BUILDER IMAGE --- #
+
+FROM rust:slim-bookworm AS builder
+
+WORKDIR /app
+
+# Install required components
+RUN rustup target add wasm32-unknown-unknown
+RUN cargo install --locked trunk
+
+# Copy files and install rust components
+COPY ./frontend .
+RUN cargo build
+
+# Build the application
+RUN trunk build --release
+
+# --- SERVING IMAGE --- #
+
+FROM nginx:alpine
+
+# copy the nginx configuration and the dist folder
+COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+
+CMD ["nginx", "-g", "daemon off;"]

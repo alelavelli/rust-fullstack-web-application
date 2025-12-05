@@ -1,11 +1,25 @@
 db_name := "hello-blog-database"
+frontend_image_name := "hello-blog-fe"
+backend_image_name := "hello-blog-be"
+integrated_image_name := "hello-blog-integrated"
 
 default:
   just --list
 
-create-local-db-checkpoint:
-    mongodump --uri="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true" --db={{db_name}} --out=db_checkpoint --quiet
+@create-db-checkpoint connection_string="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true":
+  echo 'creating checkpoint for database {{db_name}} with connection string {{connection_string}}'
+  mongodump --uri={{connection_string}} --db={{db_name}} --out=db_checkpoint --quiet
 
-restore-local-db-checkpoint:
-    docker exec hb-database mongosh --quiet --eval "rs.initiate();" && \
-    mongorestore --drop --uri="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true" --db={{db_name}} db_checkpoint/{{db_name}}/ --quiet
+@restore-db-checkpoint connection_string="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true" destination_container="hb-database":
+  echo 'retoring checkpoint for database {{db_name}}  with connection string {{connection_string}} on container {{destination_container}}'
+  docker exec hb-database mongosh --quiet --eval "rs.initiate();" && \
+  mongorestore --drop --uri={{connection_string}} --db={{db_name}} db_checkpoint/{{db_name}}/ --quiet
+
+@build-backend-image:
+  docker build -t {{backend_image_name}}:latest -f Dockerfile-backend ..
+
+@build-frontend-image:
+  docker build -t {{frontend_image_name}}:latest -f Dockerfile-frontend ..
+
+@build-backend-integrated-image:
+  docker build -t {{integrated_image_name}}:latest -f Dockerfile-integrated ..
