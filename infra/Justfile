@@ -15,11 +15,17 @@ default:
   docker exec hb-database mongosh --quiet --eval "rs.initiate();" && \
   mongorestore --drop --uri={{connection_string}} --db={{db_name}} db_checkpoint/{{db_name}}/ --quiet
 
+@build-docker-image dockerfile image_name image_tag:
+  docker build -t {{image_name}}:{{image_tag}} -f {{dockerfile}} ..
+
 @build-backend-image:
-  docker build -t {{backend_image_name}}:latest -f Dockerfile-backend ..
+  echo "Building docker container for backend service with file Dockerfile-backend with working directory $(cd .. && pwd)"
+  just build-docker-image Dockerfile-backend {{backend_image_name}} latest
 
 @build-frontend-image:
-  docker build -t {{frontend_image_name}}:latest -f Dockerfile-frontend ..
+  echo "Building docker container for frontend service with file Dockerfile-frontend with working directory $(cd .. && pwd)"
+  just build-docker-image Dockerfile-frontend {{frontend_image_name}} latest
 
 @build-backend-integrated-image:
-  docker build -t {{integrated_image_name}}:latest -f Dockerfile-integrated ..
+  echo "Building docker container for integrated backend service with file Dockerfile-integrated with working directory $(cd .. && pwd)"
+  just build-docker-image Dockerfile-integrated {{integrated_image_name}} latest
