@@ -5,5 +5,7 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct JWTAuthResponse {
     pub token: String,
-    pub token_type: String,
+    pub user_id: String,
+    pub username: String,
+    pub admin: Option<bool>,
 }

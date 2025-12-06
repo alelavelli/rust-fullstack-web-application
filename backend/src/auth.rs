@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use axum::{
     RequestPartsExt,
@@ -27,6 +27,23 @@ pub trait AuthInfo: Clone {
     fn user_id(&self) -> &ObjectId;
 }
 
+/// Helper to serialize ObjectId as a hex string
+fn serialize_object_id<S>(id: &ObjectId, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&id.to_hex())
+}
+
+/// Helper to deserialize ObjectId from a hex string
+fn deserialize_object_id<'de, D>(deserializer: D) -> Result<ObjectId, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    ObjectId::parse_str(&s).map_err(|e| serde::de::Error::custom(e.to_string()))
+}
+
 /// Struct containing information that will be encoded inside the jwt
 ///
 /// The implementation of FromRequestParts trait allow to extract the jwt
@@ -34,6 +51,10 @@ pub trait AuthInfo: Clone {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JWTAuthClaim {
     pub expiration: u32,
+    #[serde(
+        serialize_with = "serialize_object_id",
+        deserialize_with = "deserialize_object_id"
+    )]
     pub user_id: ObjectId,
     pub username: String,
 }

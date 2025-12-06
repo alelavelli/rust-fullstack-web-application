@@ -18,6 +18,15 @@ pub struct BlogPost {
 }
 
 #[derive(Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegisterInfo {
+    pub first_name: String,
+    pub last_name: String,
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Clone, PartialEq, Serialize)]
 pub struct LoginInfo {
     pub username: String,
     pub password: String,

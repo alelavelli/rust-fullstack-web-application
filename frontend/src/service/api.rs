@@ -1,6 +1,9 @@
 use crate::{
     error::ApiError,
-    model::{BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo, PublishPostRequest, UserInfo},
+    model::{
+        BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo, PublishPostRequest, RegisterInfo,
+        UserInfo,
+    },
     types::{ApiResponse, ApiResult},
 };
 use gloo_net::http::Request;
@@ -58,6 +61,66 @@ impl ApiService {
             let response = Request::post(&url)
                 .header("Content-Type", "application/json")
                 .json(&login_info)?
+                .send()
+                .await?;
+
+            let body = if response.status() == 200 {
+                Some(response.json::<LoggedUserInfo>().await?)
+            } else {
+                None
+            };
+            (body, response.status())
+        };
+
+        Ok(ApiResponse {
+            body,
+            status: status.into(),
+        })
+    }
+
+    pub async fn register(
+        &self,
+        first_name: String,
+        last_name: String,
+        username: String,
+        password: String,
+    ) -> ApiResult<Option<LoggedUserInfo>> {
+        let (body, status) = if self.mock {
+            let now = chrono::offset::Local::now().timestamp() as u32;
+            let claims = JWTAuthClaim {
+                user_id: "user-id".into(),
+                username: "username".into(),
+                expiration: now + 10000,
+            };
+            let token = encode(
+                &Header::default(),
+                &claims,
+                &EncodingKey::from_secret("secret".as_ref()),
+            )
+            .expect("failing to mock jwt");
+            (
+                Some(LoggedUserInfo {
+                    token,
+                    user_id: "user-id".into(),
+                    username: "username".into(),
+                    admin: Some(true),
+                }),
+                200,
+            )
+        } else {
+            let register_info = RegisterInfo {
+                first_name,
+                last_name,
+                username,
+                password,
+            };
+
+            let mut url = String::from(&self.api_url);
+            url.push_str("/guest/register");
+
+            let response = Request::post(&url)
+                .header("Content-Type", "application/json")
+                .json(&register_info)?
                 .send()
                 .await?;
 

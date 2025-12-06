@@ -1,7 +1,7 @@
 use crate::{
     component::{footer::Footer, header::Header},
     environment::EnvironmentService,
-    page::{admin::Admin, home::Home, login::Login, not_found::NotFound},
+    page::{admin::Admin, home::Home, login::Login, not_found::NotFound, register::Register},
     service::auth::AuthService,
     types::AppContext,
 };
@@ -10,6 +10,8 @@ use yew_router::{BrowserRouter, Routable, Switch};
 
 #[derive(Routable, Debug, Clone, PartialEq, Eq)]
 pub enum AppRoute {
+    #[at("/register")]
+    Register,
     #[at("/login")]
     Login,
     #[at("/")]
@@ -25,6 +27,7 @@ fn switch(route: AppRoute) -> Html {
     match route {
         AppRoute::Home => html! { <Home /> },
         AppRoute::Login => html! { <Login /> },
+        AppRoute::Register => html! { <Register /> },
         AppRoute::Admin => html! { <Admin /> },
         AppRoute::NotFound => html! { <NotFound /> },
     }

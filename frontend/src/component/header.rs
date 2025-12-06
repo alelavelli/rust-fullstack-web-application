@@ -37,7 +37,10 @@ pub fn header_component() -> Html {
                     </div>
                 </div>
             } else {
-                <Link<AppRoute> to={AppRoute::Login} classes="header-link"> {"Login"} </Link<AppRoute>>
+                <div class="header-action-container">
+                    <Link<AppRoute> to={AppRoute::Login} classes="header-link"> {"Login"} </Link<AppRoute>>
+                    <Link<AppRoute> to={AppRoute::Register} classes="header-link"> {"Register"} </Link<AppRoute>>
+                </div>
             }
         </header>
     }
