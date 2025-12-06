@@ -19,6 +19,15 @@ services:
       - hb_database_data:/data/db
       - hb_database_logs:/data/logs
 
+  mongosetup:
+    image: mongo:7.0.14
+    depends_on:
+      - mongodb
+    restart: "no"
+    networks:
+      - hb-network
+    entrypoint: [ "bash", "-c", "sleep 10 && mongosh --host mongodb:27017 --eval 'rs.initiate()'" ]
+
   backend:
     image: hello-blog-be:latest
     container_name: hb-backend
