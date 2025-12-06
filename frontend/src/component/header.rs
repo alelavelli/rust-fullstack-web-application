@@ -31,7 +31,7 @@ pub fn header_component() -> Html {
                     <p>{format!("Hi {}!", user_info.username)}</p>
                     <div class="header-action-container">
                         <button onclick={onclick_logout} class="header-link">{"Logout"}</button>
-                        if let Some(admin) = user_info.admin && admin{
+                        if user_info.admin {
                             <Link<AppRoute> to={AppRoute::Admin} classes="header-link"> { "Admin panel" } </Link<AppRoute>>
                         }
                     </div>

@@ -1,8 +1,8 @@
 use crate::{
     error::ApiError,
     model::{
-        BlogPost, JWTAuthClaim, LoggedUserInfo, LoginInfo, PublishPostRequest, RegisterInfo,
-        UserInfo,
+        BlogPost, JWTAuthClaim, LoggedUserInfoResponse, LoginInfo, PublishPostRequest,
+        RegisterInfo, UserInfo,
     },
     types::{ApiResponse, ApiResult},
 };
@@ -29,7 +29,7 @@ impl ApiService {
         &self,
         username: String,
         password: String,
-    ) -> ApiResult<Option<LoggedUserInfo>> {
+    ) -> ApiResult<Option<LoggedUserInfoResponse>> {
         let (body, status) = if self.mock {
             let now = chrono::offset::Local::now().timestamp() as u32;
             let claims = JWTAuthClaim {
@@ -44,11 +44,11 @@ impl ApiService {
             )
             .expect("failing to mock jwt");
             (
-                Some(LoggedUserInfo {
-                    token,
+                Some(LoggedUserInfoResponse {
+                    token: Some(token),
                     user_id: "user-id".into(),
                     username: "username".into(),
-                    admin: Some(true),
+                    admin: true,
                 }),
                 200,
             )
@@ -65,7 +65,7 @@ impl ApiService {
                 .await?;
 
             let body = if response.status() == 200 {
-                Some(response.json::<LoggedUserInfo>().await?)
+                Some(response.json::<LoggedUserInfoResponse>().await?)
             } else {
                 None
             };
@@ -84,7 +84,7 @@ impl ApiService {
         last_name: String,
         username: String,
         password: String,
-    ) -> ApiResult<Option<LoggedUserInfo>> {
+    ) -> ApiResult<Option<LoggedUserInfoResponse>> {
         let (body, status) = if self.mock {
             let now = chrono::offset::Local::now().timestamp() as u32;
             let claims = JWTAuthClaim {
@@ -99,11 +99,11 @@ impl ApiService {
             )
             .expect("failing to mock jwt");
             (
-                Some(LoggedUserInfo {
-                    token,
+                Some(LoggedUserInfoResponse {
+                    token: Some(token),
                     user_id: "user-id".into(),
                     username: "username".into(),
-                    admin: Some(true),
+                    admin: true,
                 }),
                 200,
             )
@@ -125,7 +125,7 @@ impl ApiService {
                 .await?;
 
             let body = if response.status() == 200 {
-                Some(response.json::<LoggedUserInfo>().await?)
+                Some(response.json::<LoggedUserInfoResponse>().await?)
             } else {
                 None
             };
@@ -138,27 +138,15 @@ impl ApiService {
         })
     }
 
-    pub async fn get_user_info(&self) -> ApiResult<Option<LoggedUserInfo>> {
+    pub async fn get_user_info(&self) -> ApiResult<Option<LoggedUserInfoResponse>> {
         if let Some(token) = &self.token {
             let (body, status) = if self.mock {
-                let now = chrono::offset::Local::now().timestamp() as u32;
-                let claims = JWTAuthClaim {
-                    user_id: "user-id".into(),
-                    username: "username".into(),
-                    expiration: now + 10000,
-                };
-                let token = encode(
-                    &Header::default(),
-                    &claims,
-                    &EncodingKey::from_secret("secret".as_ref()),
-                )
-                .expect("failing to mock jwt");
                 (
-                    Some(LoggedUserInfo {
-                        token,
+                    Some(LoggedUserInfoResponse {
+                        token: None,
                         user_id: "user-id".into(),
                         username: "username".into(),
-                        admin: Some(true),
+                        admin: true,
                     }),
                     200,
                 )
@@ -167,13 +155,13 @@ impl ApiService {
                 url.push_str("/user/info");
 
                 let response = Request::get(&url)
-                    .header("Content=Type", "application/json")
+                    .header("Content-Type", "application/json")
                     .header("Authorization", &format!("Bearer {token}"))
                     .send()
                     .await?;
 
                 let body = if response.status() == 200 {
-                    response.json::<Option<LoggedUserInfo>>().await?
+                    response.json::<Option<LoggedUserInfoResponse>>().await?
                 } else {
                     None
                 };
@@ -225,7 +213,7 @@ impl ApiService {
                 url.push_str("/user/blog/post");
 
                 let response = Request::get(&url)
-                    .header("Content=Type", "application/json")
+                    .header("Content-Type", "application/json")
                     .header("Authorization", &format!("Bearer {token}"))
                     .send()
                     .await?;
@@ -260,7 +248,7 @@ impl ApiService {
                 let request_payload = PublishPostRequest { title, content };
 
                 let response = Request::post(&url)
-                    .header("Content=Type", "application/json")
+                    .header("Content-Type", "application/json")
                     .header("Authorization", &format!("Bearer {token}"))
                     .json(&request_payload)?
                     .send()
@@ -308,7 +296,7 @@ impl ApiService {
                 url.push_str("/admin/user");
 
                 let response = Request::get(&url)
-                    .header("Content=Type", "application/json")
+                    .header("Content-Type", "application/json")
                     .header("Authorization", &format!("Bearer {token}"))
                     .send()
                     .await?;

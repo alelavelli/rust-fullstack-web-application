@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use crate::{
     AppResult, AppState,
     auth::JWTAuthClaim,
-    dtos::guest_response::{self, JWTAuthResponse},
+    dtos::guest_response::{self, LoggedUserInfoResponse},
     error::{AppError, ServiceAppError},
     model::{User, UserBuilder},
     service::{
@@ -55,7 +55,7 @@ impl GuestFacade {
         last_name: String,
         username: String,
         password: String,
-    ) -> AppResult<guest_response::JWTAuthResponse> {
+    ) -> AppResult<guest_response::LoggedUserInfoResponse> {
         let password_hash =
             hash_password(&password).map_err(|err| AppError::InternalServerError {
                 msg: err.to_string(),
@@ -78,11 +78,11 @@ impl GuestFacade {
 
         let token = self.create_jwt(&user)?;
 
-        Ok(AppJson(JWTAuthResponse {
-            token,
+        Ok(AppJson(LoggedUserInfoResponse {
+            token: Some(token),
             user_id: user.get_id().to_string(),
             username: user.username().to_string(),
-            admin: Some(*user.admin()),
+            admin: *user.admin(),
         }))
     }
 
@@ -90,7 +90,7 @@ impl GuestFacade {
         &self,
         username: &str,
         password: &str,
-    ) -> AppResult<guest_response::JWTAuthResponse> {
+    ) -> AppResult<guest_response::LoggedUserInfoResponse> {
         let user = UserService::login(self.state.database_service.clone(), username, password)
             .await
             .map_err(|err| match err {
@@ -103,11 +103,11 @@ impl GuestFacade {
                 },
             })?;
         let token = self.create_jwt(&user)?;
-        Ok(AppJson(JWTAuthResponse {
-            token,
+        Ok(AppJson(LoggedUserInfoResponse {
+            token: Some(token),
             user_id: user.get_id().to_string(),
             username: user.username().to_string(),
-            admin: Some(*user.admin()),
+            admin: *user.admin(),
         }))
     }
 }

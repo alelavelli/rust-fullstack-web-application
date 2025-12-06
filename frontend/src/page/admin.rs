@@ -58,7 +58,7 @@ pub fn admin_component() -> Html {
     }
 
     if let Some(context_user_info) = app_context.user_info.clone()
-        && context_user_info.admin.is_some_and(|x| x)
+        && context_user_info.admin
     {
         if user_info.is_none() {
             user_info.set(Some(context_user_info.clone()));

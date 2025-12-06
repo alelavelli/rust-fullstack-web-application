@@ -25,7 +25,7 @@ async fn register(
     State(state): State<Arc<AppState>>,
     Extension(transaction): Extension<Arc<RwLock<MongoDBDatabaseTransaction>>>,
     Json(payload): Json<guest_request::RegisterInfo>,
-) -> AppResult<guest_response::JWTAuthResponse> {
+) -> AppResult<guest_response::LoggedUserInfoResponse> {
     let database_service = state.database_service.clone();
     GuestFacade::new(state)
         .register_user(
@@ -44,7 +44,7 @@ async fn register(
 async fn login(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<guest_request::JWTAuthPayload>,
-) -> AppResult<guest_response::JWTAuthResponse> {
+) -> AppResult<guest_response::LoggedUserInfoResponse> {
     let result = GuestFacade::new(state)
         .authenticate_user(&payload.username, &payload.password)
         .await;

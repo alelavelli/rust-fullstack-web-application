@@ -33,13 +33,21 @@ pub struct LoginInfo {
 }
 
 #[derive(Clone, PartialEq, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct LoggedUserInfo {
     pub token: String,
     pub user_id: String,
     pub username: String,
+    pub admin: bool,
+}
+
+#[derive(Clone, PartialEq, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LoggedUserInfoResponse {
     #[serde(default)]
-    pub admin: Option<bool>,
+    pub token: Option<String>,
+    pub user_id: String,
+    pub username: String,
+    pub admin: bool,
 }
 
 #[derive(Clone, PartialEq, Deserialize, Debug)]

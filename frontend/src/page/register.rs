@@ -10,6 +10,7 @@ use crate::{
     app::AppRoute,
     enums::HttpStatus,
     environment::EnvironmentService,
+    model::LoggedUserInfo,
     service::{api::ApiService, auth::AuthService},
     types::{ApiResponse, AppContext},
 };
@@ -97,11 +98,19 @@ pub fn register_component() -> Html {
                         match status {
                             HttpStatus::Success(_) => {
                                 if let Some(body) = body {
+                                    let logged_user_info = LoggedUserInfo {
+                                        token: body
+                                            .token
+                                            .expect("Token must be present from register"),
+                                        user_id: body.user_id,
+                                        username: body.username,
+                                        admin: body.admin,
+                                    };
                                     AuthService::new(
                                         environment_service.token_storage_location_name,
                                         app_context,
                                     )
-                                    .set_logged_user_info(body)
+                                    .set_logged_user_info(logged_user_info)
                                     .expect("Failed to store token");
 
                                     request_error.set(None);

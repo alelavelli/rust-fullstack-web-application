@@ -5,6 +5,7 @@ use tokio::sync::RwLock;
 
 use crate::{
     auth::AuthInfo,
+    dtos::guest_response::LoggedUserInfoResponse,
     error::{AppError, DatabaseError, FacadeResult, ServiceAppError},
     model::{BlogPost, User},
     service::{
@@ -69,6 +70,15 @@ where
             access_control,
             user: user.clone(),
             database_service,
+        })
+    }
+
+    pub async fn get_info(&self) -> FacadeResult<LoggedUserInfoResponse> {
+        Ok(LoggedUserInfoResponse {
+            token: None,
+            user_id: self.user.get_id().to_string(),
+            username: self.user.username().clone(),
+            admin: *self.user.admin(),
         })
     }
 

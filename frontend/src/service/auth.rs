@@ -63,6 +63,7 @@ impl AuthService {
     /// If the token is not present or it is expired then the user info are
     /// removed from the context
     pub fn set_logged_user_info_from_storage(&self) {
+        // TODO: add a condition that if the app context already has the user info then don't do anything
         if let Some(token) = self.load_token().unwrap_or(None) {
             // verify the token in not expired
             let insecure_decoded_claims = insecure_decode::<JWTAuthClaim>(&token).unwrap().claims;
@@ -70,6 +71,10 @@ impl AuthService {
             let now = chrono::offset::Local::now().timestamp() as u32;
 
             if insecure_decoded_claims.expiration >= now {
+                if self.app_context.user_info.is_none() {
+                    // if the user is already in the context then we just return avoiding making an additional request
+                    return;
+                }
                 // We make an api request to get the actual user information to validate the
                 // ones read from the local storage. Moreover, this api request returns the
                 // information if the user is admin
@@ -88,14 +93,14 @@ impl AuthService {
                     if let Ok(ApiResponse { body, status }) = response {
                         match status {
                             HttpStatus::Success(_) => {
-                                let body = body.expect("Token must be present when it is success");
-                                if let Some(context_user_info) = &app_context.user_info {
-                                    if body.token != context_user_info.token {
-                                        app_context.set(AppContext::new(Some(body)));
-                                    }
-                                } else {
-                                    app_context.set(AppContext::new(Some(body)));
-                                }
+                                let body = body.expect("Body must be present when it is success");
+                                let logged_user_info = LoggedUserInfo {
+                                    token,
+                                    user_id: body.user_id,
+                                    username: body.username,
+                                    admin: body.admin,
+                                };
+                                app_context.set(AppContext::new(Some(logged_user_info)));
                             }
                             _ => {
                                 self_clone.remove_logged_user();
