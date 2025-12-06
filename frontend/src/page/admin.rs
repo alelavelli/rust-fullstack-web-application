@@ -18,7 +18,7 @@ use crate::{
 pub fn admin_component() -> Html {
     let app_context = use_context::<UseStateHandle<AppContext>>().expect("No app_context found");
     let user_info: UseStateHandle<Option<LoggedUserInfo>> = use_state(|| None);
-    let users: UseStateHandle<Vec<UserInfo>> = use_state(|| Vec::new());
+    let users: UseStateHandle<Vec<UserInfo>> = use_state(Vec::new);
     let get_users_error = use_state(|| None);
 
     {

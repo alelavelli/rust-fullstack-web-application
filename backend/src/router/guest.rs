@@ -45,8 +45,7 @@ async fn login(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<guest_request::JWTAuthPayload>,
 ) -> AppResult<guest_response::LoggedUserInfoResponse> {
-    let result = GuestFacade::new(state)
+    GuestFacade::new(state)
         .authenticate_user(&payload.username, &payload.password)
-        .await;
-    result
+        .await
 }
