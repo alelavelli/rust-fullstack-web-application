@@ -70,8 +70,8 @@ impl AuthService {
 
             let now = chrono::offset::Local::now().timestamp() as u32;
 
-            if insecure_decoded_claims.expiration >= now {
-                if self.app_context.user_info.is_none() {
+            if insecure_decoded_claims.exp >= now {
+                if self.app_context.user_info.is_some() {
                     // if the user is already in the context then we just return avoiding making an additional request
                     return;
                 }

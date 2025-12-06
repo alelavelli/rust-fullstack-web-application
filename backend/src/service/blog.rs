@@ -33,12 +33,14 @@ impl<D: DatabaseServiceTrait> BlogService<D> {
         title: String,
         content: String,
         user_id: ObjectId,
+        username: String,
         creation_date: DateTime<Utc>,
     ) -> ServiceResult<BlogPost> {
         BlogPostBuilder::new(self.database_service.clone())
             .title(title)
             .content(content)
             .user_id(user_id)
+            .username(username)
             .creation_date(creation_date)
             .build(self.transaction.clone())
             .await
@@ -150,6 +152,7 @@ mod tests {
                     title.clone(),
                     title.clone(),
                     user_id,
+                    "username".to_string(),
                     DateTime::<Utc>::default(),
                 )
                 .await

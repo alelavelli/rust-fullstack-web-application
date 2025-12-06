@@ -22,5 +22,6 @@ database_document!(
     content: String,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     creation_date: DateTime<Utc>,
-    user_id: ObjectId
+    user_id: ObjectId,
+    username: String,
 );

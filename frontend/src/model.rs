@@ -2,12 +2,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JWTAuthClaim {
-    pub expiration: u32,
+    pub exp: u32,
     pub user_id: String,
     pub username: String,
 }
 
 #[derive(Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BlogPost {
     pub id: String,
     pub title: String,

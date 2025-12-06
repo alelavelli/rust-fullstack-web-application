@@ -50,7 +50,7 @@ where
 /// from the request headers directly on the route definition
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JWTAuthClaim {
-    pub expiration: u32,
+    pub exp: u32,
     #[serde(
         serialize_with = "serialize_object_id",
         deserialize_with = "deserialize_object_id"
@@ -60,9 +60,9 @@ pub struct JWTAuthClaim {
 }
 
 impl JWTAuthClaim {
-    pub fn new(expiration: u32, user_id: ObjectId, username: String) -> Self {
+    pub fn new(exp: u32, user_id: ObjectId, username: String) -> Self {
         Self {
-            expiration,
+            exp,
             user_id,
             username,
         }

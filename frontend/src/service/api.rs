@@ -8,6 +8,7 @@ use crate::{
 };
 use gloo_net::http::Request;
 use jsonwebtoken::{EncodingKey, Header, encode};
+use log::info;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApiService {
@@ -35,7 +36,7 @@ impl ApiService {
             let claims = JWTAuthClaim {
                 user_id: "user-id".into(),
                 username: "username".into(),
-                expiration: now + 10000,
+                exp: now + 10000,
             };
             let token = encode(
                 &Header::default(),
@@ -71,7 +72,7 @@ impl ApiService {
             };
             (body, response.status())
         };
-
+        info!("logged user info response is {body:?}", body = body);
         Ok(ApiResponse {
             body,
             status: status.into(),
@@ -90,7 +91,7 @@ impl ApiService {
             let claims = JWTAuthClaim {
                 user_id: "user-id".into(),
                 username: "username".into(),
-                expiration: now + 10000,
+                exp: now + 10000,
             };
             let token = encode(
                 &Header::default(),

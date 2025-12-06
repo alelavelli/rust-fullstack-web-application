@@ -105,6 +105,7 @@ where
                 title,
                 content,
                 *self.user.get_id(),
+                self.user.username().to_string(),
                 chrono::offset::Utc::now(),
             )
             .await
