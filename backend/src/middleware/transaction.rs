@@ -8,7 +8,7 @@ use axum::{
     response::Response,
 };
 use tokio::sync::RwLock;
-use tracing::debug;
+use tracing::{debug, error};
 
 use crate::service::database::transaction::DatabaseTransactionTrait;
 use crate::{AppState, service::database::DatabaseServiceTrait};
@@ -31,12 +31,15 @@ where
         Method::POST | Method::PATCH | Method::DELETE | Method::PUT
     ) {
         let db_service = &app_state.database_service;
-        let transaction = Arc::new(RwLock::new(
-            db_service
-                .new_transaction()
-                .await
-                .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?,
-        ));
+        let transaction = Arc::new(RwLock::new(db_service.new_transaction().await.map_err(
+            |err| {
+                error!(
+                    "Error during creation of new database transaction: {err}",
+                    err = err
+                );
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR
+            },
+        )?));
 
         request.extensions_mut().insert(transaction.clone());
 
@@ -48,20 +51,26 @@ where
                 "Response status {status}, committing transaction",
                 status = response.status()
             );
-            guard
-                .commit_transaction()
-                .await
-                .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
+            guard.commit_transaction().await.map_err(|err| {
+                error!(
+                    "Error during creation of new database transaction: {err}",
+                    err = err
+                );
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR
+            })?;
         } else {
             debug!(
                 "Response status {status}, aborting transaction",
                 status = response.status()
             );
 
-            guard
-                .abort_transaction()
-                .await
-                .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
+            guard.abort_transaction().await.map_err(|err| {
+                error!(
+                    "Error during creation of new database transaction: {err}",
+                    err = err
+                );
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR
+            })?;
         }
         Ok(response)
     } else {

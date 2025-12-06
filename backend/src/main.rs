@@ -6,10 +6,10 @@ use axum::{
 };
 use backend::{
     AppState, EnvironmentService, EnvironmentServiceTrait, FrontendMode, middleware, router,
-    service::database::MongoDBDatabaseService,
+    service::database::{DatabaseServiceTrait, MongoDBDatabaseService},
 };
 use tower_http::services::{ServeDir, ServeFile};
-use tracing::info;
+use tracing::{error, info};
 
 /// Start the application server listening for requests
 ///
@@ -23,10 +23,18 @@ use tracing::info;
 #[tokio::main]
 async fn main() {
     let environment_service = EnvironmentService::default();
-    let database_service = MongoDBDatabaseService::new(
+    let mut database_service = MongoDBDatabaseService::new(
         environment_service.get_database_db_name().into(),
         environment_service.get_database_connection_string().into(),
     );
+    let connection_result = database_service.connect().await;
+    if let Err(connection_error) = connection_result {
+        error!(
+            "Error in connecting to database: {err}",
+            err = connection_error
+        );
+        return;
+    }
 
     let app_state = Arc::new(AppState::new(
         Box::new(environment_service),
