@@ -12,9 +12,9 @@ pub struct EnvironmentService {
 impl EnvironmentService {
     pub fn new() -> EnvironmentService {
         Self {
-            api_url: std::env::var("API_URL").unwrap_or("http://localhost:3000".into()),
+            api_url: std::env::var("API_URL").unwrap_or("http://localhost:3000/api".into()),
             mock: std::env::var("MOCK_API")
-                .unwrap_or("true".into())
+                .unwrap_or("false".into())
                 .to_lowercase()
                 == "true",
             token_storage_location_name: std::env::var("TOKEN_STORAGE_LOCATION_NAME")
