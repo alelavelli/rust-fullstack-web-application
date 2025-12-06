@@ -85,11 +85,13 @@ mod tests {
         title: String,
         content: String,
         user_id: &ObjectId,
+        username: String,
     ) -> BlogPost {
         BlogPostBuilder::new(database_service)
             .title(title)
             .content(content)
             .user_id(*user_id)
+            .username(username)
             .creation_date(DateTime::<Utc>::default())
             .build(None)
             .await
@@ -114,6 +116,7 @@ mod tests {
                     format!("Blog title {i}"),
                     format!("Blog content {i}"),
                     &user_id,
+                    "username".to_string(),
                 )
                 .await,
             );
