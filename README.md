@@ -14,9 +14,9 @@ Table 1 shows the chosen framework for each component in the stack.
 
 _Table 1: frameworks of architectural components._
 
-The application is accessibile via Browser and API and provides all functionalities that a common application has: CRUD operations to database, authorization and access control, routers, facades and services components.
+The application is accessible via Browser and API and provides all functionalities that a common application has: CRUD operations to database, authorization and access control, routers, facades and services components.
 
-> Disclamer: any line of code in this repository was written by human hands! Obviously, sometimes I used an LLM as support tool for boring tasks like writing down the css classes but there is no vibe-coding here.
+> Disclaimer: any line of code in this repository was written by human hands! Obviously, sometimes I used an LLM as support tool for boring tasks like writing down the css classes but there is no vibe-coding here.
 > The backend comes from two previous projects `sandbox-rust-web-app` and `employees-manager`, it is a more mature version.
 > The frontend is completely learned here (as you can see from the commit history) and vibe-coding was totally useless to learn this framework.
 
@@ -25,7 +25,7 @@ The application is accessibile via Browser and API and provides all functionalit
 The backend entry point, `main.rs`, configures basic services and starts the `axum` application to listen for requests from the clients:
 
 1. The `EnvironmentService` and the `MongoDBDatabaseService` objects are created to form the `AppState` that will be shared among the rest of the application.
-2. Logging is setup initializing `tracing_subcriber`.
+2. Logging is setup initializing `tracing_subscriber`.
 3. A `TcpListener` is created to listen on the specified port
 4. The application `Router` is built and then served by the listener
 
@@ -348,7 +348,42 @@ Usually, components requires some inputs using the properties.
 The application is served as docker containers using docker compose for local execution.
 The `infra` folder contains all the docker files, Just commands and docker compose specs.
 
-### Frontend container
+I prepared two docker compose files, one that uses frontend and backend as separate services and the other in which the backend service serves static frontend files.
+
+> For future work, I want to build a third way in which the frontend is served by a rust axum server instead of a nginx.
+
+To run the application you first need to create a `.env` file with you configuration (for local testing you can copy the content of `.env.example`), then you need to build docker images using the Just commands:
+
+- `just build-backend-image`
+- `just build-frontend-image`
+- `just build-backend-integrated-image`
+
+After the images are created, you can start one of the two docker compose configurations by running:
+
+```sh
+cd infra
+docker compose -f docker-compose-external.yml up -d
+```
+
+To stop everything you run:
+
+```sh
+cd infra
+docker compose -f docker-compose-external.yml down -v
+```
+
+> Note that the `-v` option will delete the volumes leaving a clear setup for the next run.
+
+### Containers
+
+The docker files follows the two step image build in which we use an image builder to compile our application and then we copy the compiled files to a target serving distroless image.
+
+> In this way, the size of the docker image is up to 80 MB!!!
+
+Note that we copy all the packages in the workspace, this is needed because the `Cargo.toml` needs all the packages to work.
+However, they will not be used for the actual service to be built.
+
+#### Frontend image
 
 Following the suggestion of the [documentation](https://yew.rs/docs/more/deployment) we do not use `trunk serve` to serve our frontend application in production.
 Instead, we compile the code and then serving it via a nginx server.
