@@ -9,10 +9,16 @@ RUN rustup target add wasm32-unknown-unknown
 RUN cargo install --locked trunk
 
 # Copy files and install rust components
-COPY ./frontend .
-RUN cargo build
+COPY backend /app/backend
+COPY frontend /app/frontend
+COPY frontend-server /app/frontend-server
+COPY Cargo.toml /app/Cargo.toml
+COPY Cargo.lock /app/Cargo.lock
+# change this .env file to change the frontend configuration
+COPY .env /app/.env
 
 # Build the application
+WORKDIR /app/frontend
 RUN trunk build --release
 
 
@@ -20,16 +26,19 @@ RUN trunk build --release
 
 FROM rust:1 AS backend-builder
 WORKDIR /app
+# Copy files and install rust components
 COPY backend /app/backend
+COPY frontend /app/frontend
+COPY frontend-server /app/frontend-server
 COPY Cargo.toml /app/Cargo.toml
 COPY Cargo.lock /app/Cargo.lock
 
-RUN cargo build --release
+RUN cargo build -p backend --release
 
 # --- SERVING IMAGE --- #
 
 FROM gcr.io/distroless/cc-debian12
-COPY --from=frontend-builder /app/dist/ /frontend-files
+COPY --from=frontend-builder /app/frontend/dist/ /frontend-files
 COPY --from=backend-builder /app/target/release/backend /
 ENV FRONTEND_MODE="integrated:frontend-files"
 CMD ["./backend"]
