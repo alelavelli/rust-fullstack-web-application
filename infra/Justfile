@@ -12,7 +12,6 @@ default:
 
 @restore-db-checkpoint connection_string="mongodb://localhost:27117/?replicaSet=rs0&directConnection=true" destination_container="hb-database":
   echo 'retoring checkpoint for database {{db_name}}  with connection string {{connection_string}} on container {{destination_container}}'
-  docker exec hb-database mongosh --quiet --eval "rs.initiate();" && \
   mongorestore --drop --uri={{connection_string}} --db={{db_name}} db_checkpoint/{{db_name}}/ --quiet
 
 @build-docker-image dockerfile image_name image_tag:

@@ -40,7 +40,7 @@ services:
       OBJECT_STORAGE_BACKEND: "LocalFileSystem"
       OBJECT_STORAGE_PREFIX_PATH: "./data"
       FRONTEND_MODE: "external"
-      MONGODB_CONNECTION_STRING: "mongodb://hb-database/{}?replicaSet=rs0&directConnection=true"
+      MONGODB_CONNECTION_STRING: "mongodb://hb-database/?replicaSet=rs0&directConnection=true"
       MONGODB_DB_NAME: hello-blog-database
     healthcheck:
       test: curl -f "http://localhost:3000/"
