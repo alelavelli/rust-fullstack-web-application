@@ -268,8 +268,7 @@ Other modules are `environment`, `enums`, `types`, `model` and `error` that will
 
 The environment service follows the same principles as the backend, it collects all the environment variables that will be used by the application.
 
-> Note: differently from the backend, there are no environment variables available at runtime, so the current implementation always takes the default values.
-> Hence, the parametrization of the environment must be done in a different way through Trunk maybe.
+> Note: differently from the backend, there are no environment variables available at runtime, so the current implementation uses the `dotenv_codegen` crate that with a proc macro loads the environment variables at compile time from the `.env` file.
 
 The `mock` environment variable is used for testing purposes to route returned mocked types instead of doing the actual API request.
 This is very useful because allows the developer to write the frontend application without an actual backend implementation.
