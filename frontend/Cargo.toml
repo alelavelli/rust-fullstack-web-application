@@ -18,3 +18,4 @@ log = "0.4.28"
 thiserror = "2.0.17"
 jsonwebtoken = { version = "10.1.0", features = ["rust_crypto"] }
 chrono = { version = "0.4.42", features = ["serde"] }
+dotenv_codegen = "0.15.0"

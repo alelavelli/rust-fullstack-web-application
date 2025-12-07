@@ -1,6 +1,8 @@
 //! Environment module provides a trait the defines the behavior of
-//! the EnvironemntService and defines the struct containing application
+//! the EnvironmentService and defines the struct containing application
 //! environment variables.
+
+use dotenv_codegen::dotenv;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct EnvironmentService {
@@ -12,13 +14,9 @@ pub struct EnvironmentService {
 impl EnvironmentService {
     pub fn new() -> EnvironmentService {
         Self {
-            api_url: std::env::var("API_URL").unwrap_or("http://localhost:3000/api".into()),
-            mock: std::env::var("MOCK_API")
-                .unwrap_or("false".into())
-                .to_lowercase()
-                == "true",
-            token_storage_location_name: std::env::var("TOKEN_STORAGE_LOCATION_NAME")
-                .unwrap_or("hello_blog_token".into()),
+            api_url: dotenv!("FE_API_URL").to_string(),
+            mock: dotenv!("FE_MOCK").to_lowercase() == "true",
+            token_storage_location_name: dotenv!("FE_TOKEN_STORAGE_LOCATION_NAME").to_string(),
         }
     }
 }
