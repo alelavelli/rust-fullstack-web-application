@@ -24,10 +24,17 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Frontend",
+            "name": "Frontend Browser",
             "type": "node-terminal",
             "request": "launch",
             "command": "trunk serve",
+            "cwd": "${workspaceFolder}/frontend"
+        },
+        {
+            "name": "Frontend App",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "cargo tauri dev",
             "cwd": "${workspaceFolder}/frontend"
         },
     ]

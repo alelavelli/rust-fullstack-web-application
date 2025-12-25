@@ -11,7 +11,6 @@ RUN cargo install --locked trunk
 # Copy files and install rust components
 COPY backend /app/backend
 COPY frontend /app/frontend
-COPY frontend-server /app/frontend-server
 COPY Cargo.toml /app/Cargo.toml
 COPY Cargo.lock /app/Cargo.lock
 # change this .env file to change the frontend configuration

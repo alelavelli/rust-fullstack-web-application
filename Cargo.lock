@@ -838,19 +838,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "frontend-server"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-extra",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

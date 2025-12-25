@@ -5,20 +5,66 @@ The focus is not on the application logic but on building all the required compo
 
 Table 1 shows the chosen framework for each component in the stack.
 
-| Component      | Framework      |
-| -------------- | -------------- |
-| Backend        | [Axum](https://github.com/tokio-rs/axum)           |
-| Frontend       | [Yew](https://yew.rs/)            |
-| Database       | [MongoDB](https://www.mongodb.com/docs/drivers/rust/current/)        |
-| Infrastructure | [Docker Compose](https://docs.docker.com/compose/) |
+| Component      | Framework                                                       |
+| -------------- | --------------------------------------------------------------- |
+| Backend        | [Axum](https://github.com/tokio-rs/axum)                        |
+| Frontend       | [Yew](https://yew.rs/)                                          |
+| Database       | [MongoDB](https://www.mongodb.com/docs/drivers/rust/current/)   |
+| Infrastructure | [Docker Compose](https://docs.docker.com/compose/)              |
+| Desktop App    | [Tauri](https://v2.tauri.app/)                                  |
 
 _Table 1: frameworks of architectural components._
 
 The application is accessible via Browser and API and provides all functionalities that a common application has: CRUD operations to database, authorization and access control, routers, facades and services components.
 
+As an alternative, the frontend can be used as desktop application using Tauri.
+
 > Disclaimer: any line of code in this repository was written by human hands! Obviously, sometimes I used an LLM as support tool for boring tasks like writing down the css classes but there is no vibe-coding here.
 > The backend comes from two previous projects `sandbox-rust-web-app` and `employees-manager`, it is a more mature version.
 > The frontend is completely learned here (as you can see from the commit history) and vibe-coding was totally useless to learn this framework.
+
+## How to run
+
+There are different ways in which you can run the code in this repo, in this section I show you them starting from the _production_ like solution.
+
+### Docker compose
+
+1 From the terminal go to `infra` folder running
+
+```sh
+cd infra
+```
+
+2 Build docker images for frontend and backend by running _just_ rules
+
+```sh
+just build-backend-image
+just build-frontend-image
+just build-backend-integrated-image
+```
+
+3 Start services with docker compose
+
+```sh
+docker compose -f docker-compose-external up -d
+```
+
+### Tauri App
+
+If you want to run the frontend as Tauri app, then you can start the backend and database as docker compose services.
+After than go to the _frontend_ folder, build the application and then open the executable file.
+
+```sh
+cd frontend
+cargo tauri build
+```
+
+### Development mode
+
+If you want to test and debug the application while developing you can use _trunk_ or _tauri_ commands for the frontend and the debugger for the backend.
+If you use vscode editor than there are two launch configurations that loads environment variables from `.env` file and launch the service.
+
+Note that if the environment variable `FE_MOCK` is set to `true` then you can use only the frontend since the API calls will be mocked.
 
 ## Backend
 
